@@ -2,16 +2,22 @@ import Card from "../components/Card";
 
 export default function Dashboard() {
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(3,1fr)",
-        gap: 20
-      }}
-    >
-      <Card title="Jauges disponibles" value="2376" />
-      <Card title="Emprunts" value="18" />
-      <Card title="Alertes" value="2" />
-    </div>
+    <>
+      <h1 style={{ marginTop: 0 }}>Tableau de bord</h1>
+
+      <div style={styles.grid}>
+        <Card title="Jauges disponibles" value="—" />
+        <Card title="Emprunts en cours" value="—" />
+        <Card title="Alertes" value="—" />
+      </div>
+    </>
   );
 }
+
+const styles: Record<string, React.CSSProperties> = {
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(3,1fr)",
+    gap: 20,
+  },
+};

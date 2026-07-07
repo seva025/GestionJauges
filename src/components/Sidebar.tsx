@@ -29,31 +29,31 @@ export default function Sidebar({ page, setPage }: SidebarProps) {
   );
 }
 
-function NavButton(props: { active: boolean; onClick: () => void; children: ReactNode }) {
+function NavButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: ReactNode }) {
   return (
     <button
-      onClick={props.onClick}
+      onClick={onClick}
       style={{
         ...styles.navButton,
-        background: props.active ? "#8a1538" : "transparent",
+        background: active ? "#8a1538" : "transparent",
       }}
     >
-      {props.children}
+      {children}
     </button>
   );
 }
 
 const styles: Record<string, React.CSSProperties> = {
   sidebar: {
-    background: "linear-gradient(180deg, #3a0718, #21030d)",
+    background: "linear-gradient(180deg,#3a0718,#21030d)",
     color: "white",
-    padding: 24
+    padding: 24,
   },
   brand: {
     display: "flex",
     alignItems: "center",
     gap: 14,
-    marginBottom: 32
+    marginBottom: 32,
   },
   logo: {
     width: 58,
@@ -63,20 +63,20 @@ const styles: Record<string, React.CSSProperties> = {
     display: "grid",
     placeItems: "center",
     fontWeight: 900,
-    fontSize: 22
+    fontSize: 22,
   },
   brandTitle: {
     margin: 0,
-    fontSize: 22
+    fontSize: 22,
   },
   brandText: {
     margin: 0,
-    color: "#f0c7d3"
+    color: "#f0c7d3",
   },
   nav: {
     display: "flex",
     flexDirection: "column",
-    gap: 10
+    gap: 10,
   },
   navButton: {
     border: "none",
@@ -86,6 +86,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 800,
     cursor: "pointer",
     fontSize: 15,
-    color: "white"
-  }
+    color: "white",
+  },
 };
