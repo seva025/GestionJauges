@@ -2,6 +2,10 @@ import { useState } from "react";
 import Sidebar, { type Page } from "./components/Sidebar";
 import TopBar from "./components/TopBar";
 import Dashboard from "./pages/Dashboard";
+import Stock from "./pages/Stock";
+import Emprunts from "./pages/Emprunts";
+import Commandes from "./pages/Commandes";
+import Parametres from "./pages/Parametres";
 
 export default function App() {
   const [page, setPage] = useState<Page>("dashboard");
@@ -14,10 +18,10 @@ export default function App() {
         <TopBar title={title(page)} />
 
         {page === "dashboard" && <Dashboard />}
-        {page === "stock" && <h1>Stock des jauges</h1>}
-        {page === "emprunts" && <h1>Emprunts</h1>}
-        {page === "commandes" && <h1>Commandes</h1>}
-        {page === "parametres" && <h1>Paramètres</h1>}
+        {page === "stock" && <Stock />}
+        {page === "emprunts" && <Emprunts />}
+        {page === "commandes" && <Commandes />}
+        {page === "parametres" && <Parametres />}
       </main>
     </div>
   );

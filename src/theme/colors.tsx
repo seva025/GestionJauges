@@ -11,13 +11,8 @@ export const colors = {
   navDark: "#21030d",
 
   green: "#15803d",
-  greenBg: "#e9f8ef",
-
   orange: "#f97316",
-  orangeBg: "#fff1e6",
-
   red: "#dc2626",
-  redBg: "#feecec",
 
   shadow: "0 18px 50px rgba(78,12,31,.12)",
 };
