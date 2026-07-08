@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-
+import { colors } from "../theme/colors";
 export type Page = "dashboard" | "stock" | "emprunts" | "commandes" | "parametres";
 
 type SidebarProps = {
@@ -35,7 +35,7 @@ function NavButton({ active, onClick, children }: { active: boolean; onClick: ()
       onClick={onClick}
       style={{
         ...styles.navButton,
-        background: active ? "#8a1538" : "transparent",
+       background: active ? colors.primary : "transparent"
       }}
     >
       {children}
@@ -45,7 +45,7 @@ function NavButton({ active, onClick, children }: { active: boolean; onClick: ()
 
 const styles: Record<string, React.CSSProperties> = {
   sidebar: {
-    background: "linear-gradient(180deg,#3a0718,#21030d)",
+  background: `linear-gradient(180deg, ${colors.nav}, ${colors.navDark})`
     color: "white",
     padding: 24,
   },
@@ -59,7 +59,7 @@ const styles: Record<string, React.CSSProperties> = {
     width: 58,
     height: 58,
     borderRadius: 18,
-    background: "rgba(255,255,255,.14)",
+   background: "rgba(255,255,255,.15)"
     display: "grid",
     placeItems: "center",
     fontWeight: 900,
