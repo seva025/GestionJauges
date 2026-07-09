@@ -37,18 +37,32 @@ export default function MetroDashboard({
 }: MetroDashboardProps) {
   const empruntsEnCours = emprunts.filter((emprunt) => emprunt.status === "emprunte");
 
-  const totalPhysique = jauges.reduce(
-    (total, jauge) => total + Number(jauge.stock_total ?? 0),
-    0
-  );
+  const empruntedByJaugeId = new Map<number, number>();
+
+  empruntsEnCours.forEach((emprunt) => {
+    emprunt.items.forEach((item) => {
+      empruntedByJaugeId.set(
+        item.jaugeId,
+        (empruntedByJaugeId.get(item.jaugeId) ?? 0) + item.qty
+      );
+    });
+  });
 
   const totalEmprunte = empruntsEnCours
     .flatMap((emprunt) => emprunt.items)
     .reduce((total, item) => total + item.qty, 0);
 
-  const referencesDisponibles = jauges.filter(
-    (jauge) => Number(jauge.stock_total ?? 0) > 0
-  ).length;
+  const totalPhysique = jauges.reduce((total, jauge) => {
+    const stockTotal = Number(jauge.stock_total ?? 0);
+    const emprunte = empruntedByJaugeId.get(jauge.id) ?? 0;
+    return total + Math.max(0, stockTotal - emprunte);
+  }, 0);
+
+  const referencesDisponibles = jauges.filter((jauge) => {
+    const stockTotal = Number(jauge.stock_total ?? 0);
+    const emprunte = empruntedByJaugeId.get(jauge.id) ?? 0;
+    return stockTotal - emprunte > 0;
+  }).length;
 
   const alertes = empruntsEnCours.filter((emprunt) => days(emprunt.date) >= 30);
 

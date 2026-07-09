@@ -2,9 +2,9 @@ import { useState } from "react";
 import Sidebar, { type Page } from "./components/Sidebar";
 import TopBar from "./components/TopBar";
 import Home from "./components/emprunts/Home";
+import Dashboard from "./pages/Dashboard";
+import Stock from "./pages/Stock";
 import Emprunts from "./pages/Emprunts";
-import Commandes from "./pages/Commandes";
-import Parametres from "./pages/Parametres";
 
 type AppMode = "home" | "collaborateur" | "metrologie";
 
@@ -63,37 +63,21 @@ export default function App() {
 
   return (
     <div style={styles.app}>
-      <Sidebar page={page} setPage={setPage} />
+      <Sidebar page={page} setPage={setPage} onLogout={retourAccueil} />
 
       <main style={styles.main}>
         <TopBar title={title(page)} />
 
         {page === "dashboard" && (
-          <Emprunts
-            mode="metrologie"
-            initialTab="dashboard"
-            onRetourAccueil={retourAccueil}
+          <Dashboard
+            onGoStock={() => setPage("stock")}
+            onGoBorrowed={() => setPage("emprunts")}
+            onGoHistory={() => setPage("historique")}
           />
         )}
-
-        {page === "stock" && (
-          <Emprunts
-            mode="metrologie"
-            initialTab="stock"
-            onRetourAccueil={retourAccueil}
-          />
-        )}
-
-        {page === "emprunts" && (
-          <Emprunts
-            mode="metrologie"
-            initialTab="borrowed"
-            onRetourAccueil={retourAccueil}
-          />
-        )}
-
-        {page === "commandes" && <Commandes />}
-        {page === "parametres" && <Parametres />}
+        {page === "stock" && <Stock />}
+        {page === "emprunts" && <Emprunts mode="metrologie" view="borrowed" onRetourAccueil={retourAccueil} />}
+        {page === "historique" && <Emprunts mode="metrologie" view="history" onRetourAccueil={retourAccueil} />}
       </main>
     </div>
   );
@@ -104,8 +88,7 @@ function title(page: Page) {
     dashboard: "Tableau de bord",
     stock: "Stock des jauges",
     emprunts: "Jauges empruntées",
-    commandes: "Commandes",
-    parametres: "Paramètres",
+    historique: "Historique",
   }[page];
 }
 
@@ -120,6 +103,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   main: {
     padding: 32,
+    overflow: "hidden",
   },
   toast: {
     position: "fixed",

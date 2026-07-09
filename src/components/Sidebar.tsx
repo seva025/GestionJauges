@@ -1,14 +1,15 @@
 import type { ReactNode } from "react";
 import { colors } from "../theme/colors";
 
-export type Page = "dashboard" | "stock" | "emprunts" | "commandes" | "parametres";
+export type Page = "dashboard" | "stock" | "emprunts" | "historique";
 
 type SidebarProps = {
   page: Page;
   setPage: (page: Page) => void;
+  onLogout?: () => void;
 };
 
-export default function Sidebar({ page, setPage }: SidebarProps) {
+export default function Sidebar({ page, setPage, onLogout }: SidebarProps) {
   return (
     <aside style={styles.sidebar}>
       <div style={styles.brand}>
@@ -20,12 +21,33 @@ export default function Sidebar({ page, setPage }: SidebarProps) {
       </div>
 
       <nav style={styles.nav}>
-        <NavButton active={page === "dashboard"} onClick={() => setPage("dashboard")}>🏠 Tableau de bord</NavButton>
-        <NavButton active={page === "stock"} onClick={() => setPage("stock")}>📏 Stock</NavButton>
-        <NavButton active={page === "emprunts"} onClick={() => setPage("emprunts")}>👤 Emprunts</NavButton>
-        <NavButton active={page === "commandes"} onClick={() => setPage("commandes")}>🚚 Commandes</NavButton>
-        <NavButton active={page === "parametres"} onClick={() => setPage("parametres")}>⚙️ Paramètres</NavButton>
+        <NavButton active={page === "dashboard"} onClick={() => setPage("dashboard")}>
+          🏠 Tableau de bord
+        </NavButton>
+        <NavButton active={page === "stock"} onClick={() => setPage("stock")}>
+          📏 Stock des jauges
+        </NavButton>
+        <NavButton active={page === "emprunts"} onClick={() => setPage("emprunts")}>
+          👤 Jauges empruntées
+        </NavButton>
+        <NavButton active={page === "historique"} onClick={() => setPage("historique")}>
+          📜 Historique
+        </NavButton>
       </nav>
+
+      <div style={styles.spacer} />
+
+      <div style={styles.modeBox}>
+        Mode actif
+        <br />
+        <strong>MÉTROLOGIE</strong>
+      </div>
+
+      {onLogout && (
+        <button style={styles.logout} onClick={onLogout}>
+          ↩ Déconnexion
+        </button>
+      )}
     </aside>
   );
 }
@@ -49,6 +71,9 @@ const styles: Record<string, React.CSSProperties> = {
     background: `linear-gradient(180deg, ${colors.nav}, ${colors.navDark})`,
     color: "white",
     padding: 24,
+    display: "flex",
+    flexDirection: "column",
+    minHeight: "100vh",
   },
   brand: {
     display: "flex",
@@ -65,6 +90,7 @@ const styles: Record<string, React.CSSProperties> = {
     placeItems: "center",
     fontWeight: 900,
     fontSize: 22,
+    flex: "0 0 auto",
   },
   brandTitle: {
     margin: 0,
@@ -88,5 +114,25 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "pointer",
     fontSize: 15,
     color: "white",
+  },
+  spacer: {
+    flex: 1,
+  },
+  modeBox: {
+    border: "1px solid rgba(255,255,255,.18)",
+    borderRadius: 15,
+    padding: 16,
+    color: "#f9dce7",
+    marginBottom: 20,
+  },
+  logout: {
+    border: "none",
+    background: "transparent",
+    color: "#f8e8ee",
+    textAlign: "left",
+    fontWeight: 900,
+    cursor: "pointer",
+    fontSize: 15,
+    padding: "10px 0",
   },
 };

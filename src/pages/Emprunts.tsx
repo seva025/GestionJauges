@@ -1,19 +1,17 @@
 import { useEffect, useState } from "react";
 import Collaborateur from "../components/emprunts/Collaborateur";
 import MetroBorrowed from "../components/emprunts/MetroBorrowed";
-import MetroDashboard from "../components/emprunts/MetroDashboard";
 import MetroHistory from "../components/emprunts/MetroHistory";
-import MetroStock from "../components/emprunts/MetroStock";
 import { supabase } from "../services/supabase";
 
 type AppMode = "collaborateur" | "metrologie";
-type MetroTab = "dashboard" | "stock" | "borrowed" | "history";
+type MetrologieView = "borrowed" | "history";
 type JaugeType = "" | "MD" | "SPEC";
 
 type EmpruntsProps = {
   mode: AppMode;
   onRetourAccueil: () => void;
-  initialTab?: MetroTab;
+  view?: MetrologieView;
 };
 
 type StockItem = {
@@ -38,16 +36,12 @@ type EmpruntItem = {
   }[];
 };
 
-export default function Emprunts({
-  mode,
-  onRetourAccueil,
-  initialTab = "dashboard",
-}: EmpruntsProps) {
-  const [metroTab, setMetroTab] = useState<MetroTab>(initialTab);
+export default function Emprunts({ mode, onRetourAccueil, view = "borrowed" }: EmpruntsProps) {
   const [stock, setStock] = useState<StockItem[]>([]);
   const [emprunts, setEmprunts] = useState<EmpruntItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState("");
+  const [error, setError] = useState("");
 
   const [collabName, setCollabName] = useState("");
   const [search, setSearch] = useState("");
@@ -55,38 +49,18 @@ export default function Emprunts({
   const [typeFilter, setTypeFilter] = useState<"all" | JaugeType>("all");
   const [borrowedSearch, setBorrowedSearch] = useState("");
 
-  useEffect(() => {
-    setMetroTab(initialTab);
-  }, [initialTab]);
-
-  useEffect(() => {
-    loadData();
-  }, []);
-
   async function loadData() {
     setLoading(true);
+    setError("");
 
     try {
-      const { data: jaugesData, error: jaugesError } = await supabase
-        .from("jauges")
-        .select("id, diametre, type_code, stock_total, en_commande")
-        .order("diametre", { ascending: true });
-
-      if (jaugesError) throw jaugesError;
-
-      const { data: empruntsData, error: empruntsError } = await supabase
-        .from("emprunts")
-        .select(
-          "id, collaborateur, date_emprunt, statut, emprunt_jauges(id, jauge_id, quantite, jauges(id, diametre, type_code))"
-        )
-        .order("date_emprunt", { ascending: false });
-
-      if (empruntsError) throw empruntsError;
+      const jaugesData = await fetchAllJauges();
+      const empruntsData = await fetchAllEmprunts();
 
       setStock(
-        (jaugesData ?? [])
+        jaugesData
           .map((jauge: any) => ({
-            id: Number(jauge.id),
+            id: jauge.id,
             diam: jauge.diametre,
             type: (jauge.type_code ?? "") as JaugeType,
             total: Number(jauge.stock_total ?? 0),
@@ -96,8 +70,8 @@ export default function Emprunts({
       );
 
       setEmprunts(
-        (empruntsData ?? []).map((emprunt: any) => ({
-          id: Number(emprunt.id),
+        empruntsData.map((emprunt: any) => ({
+          id: emprunt.id,
           collab: emprunt.collaborateur ?? "",
           date: new Date(emprunt.date_emprunt ?? new Date()).getTime(),
           status:
@@ -106,24 +80,25 @@ export default function Emprunts({
               : "emprunte",
           items: (emprunt.emprunt_jauges ?? [])
             .map((item: any) => ({
-              rowId: Number(item.id),
-              jaugeId: Number(item.jauge_id),
+              rowId: item.id,
+              jaugeId: item.jauge_id,
               diam: item.jauges?.diametre ?? "",
               type: (item.jauges?.type_code ?? "") as JaugeType,
               qty: Number(item.quantite ?? 0),
             }))
-            .filter((item: EmpruntItem["items"][number]) => item.qty > 0),
+            .filter((item: { diam: string | number | null; qty: number }) => item.diam && item.qty > 0),
         }))
       );
-    } catch (error) {
-      showToast(
-        "Erreur Supabase : " +
-          (error instanceof Error ? error.message : "Erreur inconnue")
-      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    loadData();
+  }, []);
 
   function showToast(message: string) {
     setToast(message);
@@ -176,8 +151,11 @@ export default function Emprunts({
       (acc, jaugeId) => {
         const existing = acc.find((row) => row.jaugeId === jaugeId);
 
-        if (existing) existing.quantite += 1;
-        else acc.push({ jaugeId, quantite: 1 });
+        if (existing) {
+          existing.quantite += 1;
+        } else {
+          acc.push({ jaugeId, quantite: 1 });
+        }
 
         return acc;
       },
@@ -186,6 +164,7 @@ export default function Emprunts({
 
     for (const row of rows) {
       const jauge = stock.find((item) => item.id === row.jaugeId);
+
       if (!jauge || available(jauge) < row.quantite) {
         showToast("Stock insuffisant");
         return;
@@ -214,9 +193,7 @@ export default function Emprunts({
         quantite: row.quantite,
       }));
 
-      const { error: lignesError } = await supabase
-        .from("emprunt_jauges")
-        .insert(lignes);
+      const { error: lignesError } = await supabase.from("emprunt_jauges").insert(lignes);
 
       if (lignesError) throw lignesError;
 
@@ -225,183 +202,37 @@ export default function Emprunts({
       setCollabName("");
       await loadData();
       showToast("Emprunt enregistré");
-    } catch (error) {
-      showToast(
-        "Erreur emprunt : " +
-          (error instanceof Error ? error.message : "Erreur inconnue")
-      );
-    }
-  }
-
-  async function addStock(diam: string, type: JaugeType, qty: number) {
-    if (!diam || qty < 1) {
-      showToast("Valeur incorrecte");
-      return;
-    }
-
-    const existing = stock.find(
-      (item) => normalizeDiam(item.diam) === normalizeDiam(diam) && item.type === type
-    );
-
-    try {
-      if (existing) {
-        const { error } = await supabase
-          .from("jauges")
-          .update({ stock_total: existing.total + qty })
-          .eq("id", existing.id);
-
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("jauges").insert({
-          diametre: normalizeDiam(diam),
-          type_code: type,
-          stock_total: qty,
-          en_commande: 0,
-        });
-
-        if (error) throw error;
-      }
-
-      await loadData();
-      showToast("Stock mis à jour");
-    } catch (error) {
-      showToast(
-        "Erreur stock : " +
-          (error instanceof Error ? error.message : "Erreur inconnue")
-      );
-    }
-  }
-
-  async function removeQty(item: StockItem, qty: number) {
-    if (qty < 1) {
-      showToast("Quantité incorrecte");
-      return;
-    }
-
-    if (qty > available(item)) {
-      showToast("Impossible : quantité empruntée ou stock insuffisant");
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from("jauges")
-        .update({ stock_total: item.total - qty })
-        .eq("id", item.id);
-
-      if (error) throw error;
-
-      await loadData();
-      showToast("Stock mis à jour");
-    } catch (error) {
-      showToast(
-        "Erreur retrait : " +
-          (error instanceof Error ? error.message : "Erreur inconnue")
-      );
-    }
-  }
-
-  async function removeAll(item: StockItem) {
-    const qty = available(item);
-
-    if (qty <= 0) {
-      showToast("Aucune jauge disponible à retirer");
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from("jauges")
-        .update({ stock_total: item.total - qty })
-        .eq("id", item.id);
-
-      if (error) throw error;
-
-      await loadData();
-      showToast("Stock mis à jour");
-    } catch (error) {
-      showToast(
-        "Erreur retrait : " +
-          (error instanceof Error ? error.message : "Erreur inconnue")
-      );
-    }
-  }
-
-  async function orderStock(item: StockItem, qty: number) {
-    if (qty < 1) {
-      showToast("Quantité incorrecte");
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from("jauges")
-        .update({ en_commande: item.enCommande + qty })
-        .eq("id", item.id);
-
-      if (error) throw error;
-
-      await loadData();
-      showToast("Commande enregistrée");
-    } catch (error) {
-      showToast(
-        "Erreur commande : " +
-          (error instanceof Error ? error.message : "Erreur inconnue")
-      );
-    }
-  }
-
-  async function receiveStock(item: StockItem, qty: number) {
-    if (qty < 1) {
-      showToast("Quantité incorrecte");
-      return;
-    }
-
-    if (qty > item.enCommande) {
-      showToast("Impossible : quantité supérieure au restant");
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from("jauges")
-        .update({
-          stock_total: item.total + qty,
-          en_commande: item.enCommande - qty,
-        })
-        .eq("id", item.id);
-
-      if (error) throw error;
-
-      await loadData();
-      showToast("Commande réceptionnée");
-    } catch (error) {
-      showToast(
-        "Erreur réception : " +
-          (error instanceof Error ? error.message : "Erreur inconnue")
-      );
+    } catch (err) {
+      showToast("Erreur emprunt : " + (err instanceof Error ? err.message : "Erreur inconnue"));
     }
   }
 
   async function rangeOne(empruntId: number, rowId: number, qty: number) {
-    if (qty < 1) {
+    const quantityText = window.prompt("Quantité à ranger", "1");
+    const quantity = Number(quantityText ?? "0");
+
+    if (!quantityText) return;
+
+    if (!Number.isFinite(quantity) || quantity < 1) {
       showToast("Quantité incorrecte");
       return;
     }
 
+    if (quantity > qty) {
+      showToast("Quantité supérieure à l'emprunt");
+      return;
+    }
+
     try {
-      if (qty <= 1) {
+      if (quantity < qty) {
         const { error } = await supabase
           .from("emprunt_jauges")
-          .delete()
+          .update({ quantite: qty - quantity })
           .eq("id", rowId);
 
         if (error) throw error;
       } else {
-        const { error } = await supabase
-          .from("emprunt_jauges")
-          .update({ quantite: qty - 1 })
-          .eq("id", rowId);
+        const { error } = await supabase.from("emprunt_jauges").delete().eq("id", rowId);
 
         if (error) throw error;
       }
@@ -426,18 +257,14 @@ export default function Emprunts({
       }
 
       await loadData();
-      showToast("Jauge rangée");
-    } catch (error) {
-      showToast(
-        "Erreur rangement : " +
-          (error instanceof Error ? error.message : "Erreur inconnue")
-      );
+      showToast("Jauge(s) rangée(s)");
+    } catch (err) {
+      showToast("Erreur rangement : " + (err instanceof Error ? err.message : "Erreur inconnue"));
     }
   }
 
-  if (loading) {
-    return <div style={styles.loading}>Connexion à Supabase...</div>;
-  }
+  if (loading) return <div style={styles.loading}>Connexion à Supabase...</div>;
+  if (error) return <div style={styles.error}>Erreur : {error}</div>;
 
   if (mode === "collaborateur") {
     return (
@@ -465,70 +292,8 @@ export default function Emprunts({
   }
 
   return (
-    <div style={styles.page}>
-      <div style={styles.metroNav}>
-        <button
-          style={navStyle(metroTab === "dashboard")}
-          onClick={() => setMetroTab("dashboard")}
-        >
-          Tableau de bord
-        </button>
-
-        <button
-          style={navStyle(metroTab === "stock")}
-          onClick={() => setMetroTab("stock")}
-        >
-          Stock
-        </button>
-
-        <button
-          style={navStyle(metroTab === "borrowed")}
-          onClick={() => setMetroTab("borrowed")}
-        >
-          Jauges empruntées
-        </button>
-
-        <button
-          style={navStyle(metroTab === "history")}
-          onClick={() => setMetroTab("history")}
-        >
-          Historique
-        </button>
-
-        <button style={styles.logout} onClick={onRetourAccueil}>
-          Déconnexion
-        </button>
-      </div>
-
-      {metroTab === "dashboard" && (
-        <MetroDashboard
-          jauges={stock.map((jauge) => ({
-            id: jauge.id,
-            diametre: jauge.diam,
-            type_code: jauge.type,
-            stock_total: jauge.total,
-            en_commande: jauge.enCommande,
-          }))}
-          emprunts={emprunts}
-          onGoStock={() => setMetroTab("stock")}
-          onGoBorrowed={() => setMetroTab("borrowed")}
-          onGoHistory={() => setMetroTab("history")}
-        />
-      )}
-
-      {metroTab === "stock" && (
-        <MetroStock
-          stock={stock}
-          available={available}
-          onAddStock={addStock}
-          onRemoveQty={removeQty}
-          onRemoveAll={removeAll}
-          onOrder={orderStock}
-          onReceive={receiveStock}
-        />
-      )}
-
-      {metroTab === "borrowed" && (
+    <>
+      {view === "borrowed" && (
         <MetroBorrowed
           emprunts={emprunts}
           search={borrowedSearch}
@@ -537,18 +302,55 @@ export default function Emprunts({
         />
       )}
 
-      {metroTab === "history" && <MetroHistory emprunts={emprunts} />}
+      {view === "history" && <MetroHistory emprunts={emprunts} />}
 
       {toast && <div style={styles.toast}>{toast}</div>}
-    </div>
+    </>
   );
 }
 
-function normalizeDiam(value: string | number | null | undefined) {
-  return String(value ?? "")
-    .trim()
-    .replace(",", ".")
-    .replace(/\.$/, "");
+async function fetchAllJauges() {
+  const all: any[] = [];
+  const step = 1000;
+
+  for (let from = 0; ; from += step) {
+    const { data, error } = await supabase
+      .from("jauges")
+      .select("id, diametre, type_code, stock_total, en_commande")
+      .order("diametre", { ascending: true })
+      .range(from, from + step - 1);
+
+    if (error) throw new Error(error.message);
+
+    all.push(...(data ?? []));
+
+    if (!data || data.length < step) break;
+  }
+
+  return all;
+}
+
+async function fetchAllEmprunts() {
+  const all: any[] = [];
+  const step = 1000;
+
+  for (let from = 0; ; from += step) {
+    const { data, error } = await supabase
+      .from("emprunts")
+      .select(
+        "id, collaborateur, date_emprunt, statut, emprunt_jauges(id, jauge_id, quantite, jauges(id, diametre, type_code))"
+      )
+      .order("date_emprunt", { ascending: false })
+      .range(from, from + step - 1);
+
+    if (error) throw new Error(error.message);
+
+    all.push(...(data ?? []));
+
+    if (!data || data.length < step) break;
+  }
+
+  return all;
 }
 
 function sortStock(a: StockItem, b: StockItem) {
@@ -560,22 +362,7 @@ function sortStock(a: StockItem, b: StockItem) {
   return String(a.type ?? "").localeCompare(String(b.type ?? ""));
 }
 
-function navStyle(active: boolean): React.CSSProperties {
-  return {
-    border: "none",
-    borderRadius: 12,
-    padding: "12px 14px",
-    fontWeight: 900,
-    cursor: "pointer",
-    background: active ? "#8a1538" : "white",
-    color: active ? "white" : "#251116",
-  };
-}
-
 const styles: Record<string, React.CSSProperties> = {
-  page: {
-    minHeight: "calc(100vh - 120px)",
-  },
   loading: {
     background: "white",
     border: "1px solid #e3d3d8",
@@ -584,21 +371,12 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 900,
     color: "#5f0f28",
   },
-  metroNav: {
-    display: "flex",
-    gap: 10,
-    flexWrap: "wrap",
-    marginBottom: 20,
-  },
-  logout: {
-    marginLeft: "auto",
-    border: "none",
-    borderRadius: 12,
-    padding: "12px 14px",
+  error: {
+    background: "#feecec",
+    color: "#dc2626",
+    borderRadius: 18,
+    padding: 24,
     fontWeight: 900,
-    cursor: "pointer",
-    background: "#f5e9ee",
-    color: "#251116",
   },
   toast: {
     position: "fixed",
@@ -609,6 +387,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: "13px 18px",
     borderRadius: 14,
     boxShadow: "0 18px 50px rgba(78,12,31,.12)",
-    zIndex: 20,
+    zIndex: 9999,
+    fontWeight: 800,
   },
 };
