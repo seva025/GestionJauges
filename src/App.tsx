@@ -8,7 +8,7 @@ import Emprunts from "./pages/Emprunts";
 
 type AppMode = "home" | "collaborateur" | "metrologie";
 
-const PASS = "Metrologie_2024";
+const PASS = "123";
 
 export default function App() {
   const [mode, setMode] = useState<AppMode>("home");

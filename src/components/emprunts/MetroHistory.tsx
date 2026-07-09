@@ -28,8 +28,8 @@ export default function MetroHistory({ emprunts }: Props) {
         <thead>
           <tr>
             <th style={styles.th}>Collaborateur</th>
-            <th style={styles.th}>Jauges</th>
-            <th style={styles.th}>Date</th>
+            <th style={styles.th}>Jauges empruntées</th>
+            <th style={styles.th}>Date emprunt</th>
             <th style={styles.th}>Jours</th>
             <th style={styles.th}>Statut</th>
           </tr>
@@ -38,21 +38,24 @@ export default function MetroHistory({ emprunts }: Props) {
         <tbody>
           {emprunts.map((emprunt) => (
             <tr key={emprunt.id}>
-              <td style={styles.td}>{emprunt.collab}</td>
+              <td style={styles.td}>{emprunt.collab || "Sans nom"}</td>
 
               <td style={styles.td}>
-                <div style={styles.tags}>
-                  {emprunt.items.map((item) => (
-                    <span key={item.rowId} style={styles.tag}>
-                      Ø {item.diam}
-                      <TypeBadge type={item.type} /> x{item.qty}
-                    </span>
-                  ))}
-                </div>
+                {emprunt.items.length > 0 ? (
+                  <div style={styles.tags}>
+                    {emprunt.items.map((item) => (
+                      <span key={item.rowId} style={styles.tag}>
+                        Ø {item.diam}
+                        <TypeBadge type={item.type} /> x{item.qty}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <span style={styles.muted}>Aucune jauge</span>
+                )}
               </td>
 
               <td style={styles.td}>{formatDate(emprunt.date)}</td>
-
               <td style={styles.td}>{days(emprunt.date)}</td>
 
               <td style={styles.td}>
@@ -161,6 +164,10 @@ const styles: Record<string, React.CSSProperties> = {
   orangePill: {
     color: "#f97316",
     background: "#fff1e6",
+  },
+  muted: {
+    color: "#7a6670",
+    fontWeight: 700,
   },
   emptyCell: {
     color: "#7a6670",
