@@ -1,39 +1,64 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../services/supabase";
 
+type DashboardStats = {
+  jauges: number;
+  emprunts: number;
+  alertes: number;
+  commandes: number;
+};
+
 export function useDashboardStats() {
-  const [jauges, setJauges] = useState(0);
-  const [emprunts, setEmprunts] = useState(0);
+  const [stats, setStats] = useState<DashboardStats>({
+    jauges: 0,
+    emprunts: 0,
+    alertes: 0,
+    commandes: 0,
+  });
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function load() {
+    async function loadStats() {
       setLoading(true);
 
-      const { data: jaugesData, error: jaugesError } = await supabase
+      const { data: jaugesData } = await supabase
         .from("jauges")
-        .select("stock_total");
+        .select("stock_total, en_commande");
 
-      const { data: empruntsData, error: empruntsError } = await supabase
+      const { count: empruntsCount } = await supabase
         .from("emprunts")
-        .select("id")
-        .eq("statut", "emprunte");
+        .select("*", { count: "exact", head: true });
 
-      if (jaugesError) console.error("Erreur jauges:", jaugesError);
-      if (empruntsError) console.error("Erreur emprunts:", empruntsError);
+      const jauges = (jaugesData ?? []).reduce(
+        (total, item) => total + Number(item.stock_total ?? 0),
+        0
+      );
 
-      const totalJauges =
-        jaugesData?.reduce((sum, jauge) => {
-          return sum + Number(jauge.stock_total || 0);
-        }, 0) ?? 0;
+      const commandes = (jaugesData ?? []).reduce(
+        (total, item) => total + Number(item.en_commande ?? 0),
+        0
+      );
 
-      setJauges(totalJauges);
-      setEmprunts(empruntsData?.length ?? 0);
+      const alertes = (jaugesData ?? []).filter(
+        (item) => Number(item.stock_total ?? 0) <= 0
+      ).length;
+
+      setStats({
+        jauges,
+        emprunts: empruntsCount ?? 0,
+        alertes,
+        commandes,
+      });
+
       setLoading(false);
     }
 
-    load();
+    loadStats();
   }, []);
 
-  return { jauges, emprunts, loading };
+  return {
+    ...stats,
+    loading,
+  };
 }
