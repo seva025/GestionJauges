@@ -6,6 +6,8 @@ import {
   getJaugeStockTotal,
   isJaugeEnRupture,
 } from "../../models/jauge";
+import EmpruntDialog from "./EmpruntDialog";
+import { createJaugeEmprunt } from "../../services/empruntService";
 
 type TabKey = "general" | "emprunts" | "commandes" | "historique";
 
@@ -13,100 +15,144 @@ type JaugeSheetProps = {
   jauge: Jauge | null;
   open: boolean;
   onClose: () => void;
+  onEmpruntCreated?: () => Promise<void> | void;
 };
 
-export default function JaugeSheet({ jauge, open, onClose }: JaugeSheetProps) {
+export default function JaugeSheet({
+  jauge,
+  open,
+  onClose,
+  onEmpruntCreated,
+}: JaugeSheetProps) {
   const [activeTab, setActiveTab] = useState<TabKey>("general");
+  const [empruntOpen, setEmpruntOpen] = useState(false);
 
   if (!open || !jauge) {
     return null;
   }
 
-  const stockTotal = getJaugeStockTotal(jauge);
-  const enCommande = getJaugeEnCommande(jauge);
-  const rupture = isJaugeEnRupture(jauge);
+  const currentJauge = jauge;
+  const stockTotal = getJaugeStockTotal(currentJauge);
+  const enCommande = getJaugeEnCommande(currentJauge);
+  const rupture = isJaugeEnRupture(currentJauge);
+
+async function handleCreateEmprunt(values: {
+  collaborateur: string;
+  quantite: number;
+  typeEmprunt: "COLLABORATEUR" | "METROLOGIE";
+  commentaire?: string;
+}) {
+  await createJaugeEmprunt({
+    jaugeId: currentJauge.id,
+    collaborateur: values.collaborateur,
+    quantite: values.quantite,
+    stockActuel: stockTotal,
+    typeEmprunt: values.typeEmprunt,
+    commentaire: values.commentaire,
+  });
+
+  if (onEmpruntCreated) {
+    await onEmpruntCreated();
+  }
+}
+
+ 
 
   return (
-    <div style={styles.overlay} onClick={onClose}>
-      <section style={styles.sheet} onClick={(event) => event.stopPropagation()}>
-        <header style={styles.header}>
-          <div>
-            <p style={styles.eyebrow}>Fiche jauge</p>
-            <h2 style={styles.title}>{getJaugeLabel(jauge)}</h2>
+    <>
+      <div style={styles.overlay} onClick={onClose}>
+        <section style={styles.sheet} onClick={(event) => event.stopPropagation()}>
+          <header style={styles.header}>
+            <div>
+              <p style={styles.eyebrow}>Fiche jauge</p>
+              <h2 style={styles.title}>{getJaugeLabel(currentJauge)}</h2>
+            </div>
+
+            <button style={styles.closeButton} onClick={onClose}>
+              Fermer
+            </button>
+          </header>
+
+          <div style={styles.statusRow}>
+            <Badge
+              label={rupture ? "Rupture" : "Disponible"}
+              tone={rupture ? "red" : "green"}
+            />
+            {enCommande > 0 && <Badge label="En commande" tone="orange" />}
           </div>
 
-          <button style={styles.closeButton} onClick={onClose}>
-            Fermer
-          </button>
-        </header>
+          <nav style={styles.tabs}>
+            <Tab label="Général" value="general" active={activeTab} onClick={setActiveTab} />
+            <Tab label="Emprunts" value="emprunts" active={activeTab} onClick={setActiveTab} />
+            <Tab label="Commandes" value="commandes" active={activeTab} onClick={setActiveTab} />
+            <Tab label="Historique" value="historique" active={activeTab} onClick={setActiveTab} />
+          </nav>
 
-        <div style={styles.statusRow}>
-          <Badge label={rupture ? "Rupture" : "Disponible"} tone={rupture ? "red" : "green"} />
-          {enCommande > 0 && <Badge label="En commande" tone="orange" />}
-        </div>
+          {activeTab === "general" && (
+            <section style={styles.panel}>
+              <h3 style={styles.sectionTitle}>Informations générales</h3>
 
-        <nav style={styles.tabs}>
-          <Tab label="Général" value="general" active={activeTab} onClick={setActiveTab} />
-          <Tab label="Emprunts" value="emprunts" active={activeTab} onClick={setActiveTab} />
-          <Tab label="Commandes" value="commandes" active={activeTab} onClick={setActiveTab} />
-          <Tab label="Historique" value="historique" active={activeTab} onClick={setActiveTab} />
-        </nav>
+              <div style={styles.grid}>
+                <Item label="Identifiant" value={`#${currentJauge.id}`} />
+                <Item label="Diamètre" value={currentJauge.diametre ?? "Non renseigné"} />
+                <Item label="Type" value={currentJauge.type_code ?? "Non renseigné"} />
+                <Item label="Stock total" value={stockTotal} />
+                <Item label="En commande" value={enCommande} />
+                <Item
+                  label="Créée le"
+                  value={
+                    currentJauge.created_at
+                      ? new Date(currentJauge.created_at).toLocaleDateString("fr-FR")
+                      : "Non renseigné"
+                  }
+                />
+              </div>
+            </section>
+          )}
 
-        {activeTab === "general" && (
+          {activeTab === "emprunts" && (
+            <Placeholder
+              title="Emprunts"
+              text="Les emprunts liés à cette jauge seront connectés dans le sprint suivant."
+            />
+          )}
+
+          {activeTab === "commandes" && (
+            <Placeholder
+              title="Commandes"
+              text="Les commandes liées à cette jauge seront connectées en V0.7."
+            />
+          )}
+
+          {activeTab === "historique" && (
+            <Placeholder
+              title="Historique"
+              text="L’historique des mouvements sera connecté après les modules Emprunts et Commandes."
+            />
+          )}
+
           <section style={styles.panel}>
-            <h3 style={styles.sectionTitle}>Informations générales</h3>
+            <h3 style={styles.sectionTitle}>Actions</h3>
 
-            <div style={styles.grid}>
-              <Item label="Identifiant" value={`#${jauge.id}`} />
-              <Item label="Diamètre" value={jauge.diametre ?? "Non renseigné"} />
-              <Item label="Type" value={jauge.type_code ?? "Non renseigné"} />
-              <Item label="Stock total" value={stockTotal} />
-              <Item label="En commande" value={enCommande} />
-              <Item
-                label="Créée le"
-                value={
-                  jauge.created_at
-                    ? new Date(jauge.created_at).toLocaleDateString("fr-FR")
-                    : "Non renseigné"
-                }
-              />
+            <div style={styles.actions}>
+              <button style={styles.actionButton}>Modifier la jauge</button>
+              <button style={styles.actionButton} onClick={() => setEmpruntOpen(true)}>
+                Créer un emprunt
+              </button>
+              <button style={styles.actionButton}>Créer une commande</button>
+              <button style={styles.actionButton}>Imprimer / QR Code</button>
             </div>
           </section>
-        )}
-
-        {activeTab === "emprunts" && (
-          <Placeholder
-            title="Emprunts"
-            text="Les emprunts liés à cette jauge seront connectés en V0.6."
-          />
-        )}
-
-        {activeTab === "commandes" && (
-          <Placeholder
-            title="Commandes"
-            text="Les commandes liées à cette jauge seront connectées en V0.7."
-          />
-        )}
-
-        {activeTab === "historique" && (
-          <Placeholder
-            title="Historique"
-            text="L’historique des mouvements sera connecté après les modules Emprunts et Commandes."
-          />
-        )}
-
-        <section style={styles.panel}>
-          <h3 style={styles.sectionTitle}>Actions</h3>
-
-          <div style={styles.actions}>
-            <button style={styles.actionButton}>Modifier la jauge</button>
-            <button style={styles.actionButton}>Créer un emprunt</button>
-            <button style={styles.actionButton}>Créer une commande</button>
-            <button style={styles.actionButton}>Imprimer / QR Code</button>
-          </div>
         </section>
-      </section>
-    </div>
+      </div>
+
+      <EmpruntDialog
+        open={empruntOpen}
+        jauge={currentJauge}
+        onClose={() => setEmpruntOpen(false)}
+        onConfirm={handleCreateEmprunt}
+      />
+    </>
   );
 }
 

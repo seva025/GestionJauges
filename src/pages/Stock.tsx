@@ -20,14 +20,20 @@ export default function Stock() {
     setSheetJauge(null);
   }
 
+  async function handleEmpruntCreated() {
+    await stock.reload();
+    closeSheet();
+  }
+
   return (
     <div style={styles.page}>
       <section style={styles.header}>
         <div>
-          <p style={styles.version}>V0.5</p>
+          <p style={styles.version}>V0.6.1</p>
           <h1 style={styles.title}>Stock des jauges</h1>
           <p style={styles.subtitle}>
-            Recherche, filtres, tableau, sélection et fiche jauge.
+            Recherche, filtres, tableau, sélection, fiche jauge et création
+            d’emprunt.
           </p>
         </div>
 
@@ -66,6 +72,7 @@ export default function Stock() {
         open={sheetJauge !== null}
         jauge={sheetJauge}
         onClose={closeSheet}
+        onEmpruntCreated={handleEmpruntCreated}
       />
     </div>
   );
