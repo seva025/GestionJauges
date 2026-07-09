@@ -51,7 +51,7 @@ export default function MetroHistory({ emprunts }: Props) {
                     ))}
                   </div>
                 ) : (
-                  <span style={styles.muted}>Aucune jauge</span>
+                  <span style={styles.muted}>Aucune jauge associée</span>
                 )}
               </td>
 
@@ -60,13 +60,9 @@ export default function MetroHistory({ emprunts }: Props) {
 
               <td style={styles.td}>
                 {emprunt.status === "rendu" ? (
-                  <span style={{ ...styles.pill, ...styles.greenPill }}>
-                    Rendu
-                  </span>
+                  <span style={{ ...styles.pill, ...styles.greenPill }}>Rendu</span>
                 ) : (
-                  <span style={{ ...styles.pill, ...styles.orangePill }}>
-                    En cours
-                  </span>
+                  <span style={{ ...styles.pill, ...styles.orangePill }}>En cours</span>
                 )}
               </td>
             </tr>

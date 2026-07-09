@@ -56,38 +56,52 @@ export default function Emprunts({ mode, onRetourAccueil, view = "borrowed" }: E
     try {
       const jaugesData = await fetchAllJauges();
       const empruntsData = await fetchAllEmprunts();
+      const lignesData = await fetchAllEmpruntJauges();
 
-      setStock(
-        jaugesData
-          .map((jauge: any) => ({
-            id: jauge.id,
-            diam: jauge.diametre,
-            type: (jauge.type_code ?? "") as JaugeType,
-            total: Number(jauge.stock_total ?? 0),
-            enCommande: Number(jauge.en_commande ?? 0),
-          }))
-          .sort(sortStock)
-      );
+      const stockItems: StockItem[] = jaugesData
+        .map((jauge: any) => ({
+          id: jauge.id,
+          diam: jauge.diametre,
+          type: (jauge.type_code ?? "") as JaugeType,
+          total: Number(jauge.stock_total ?? 0),
+          enCommande: Number(jauge.en_commande ?? 0),
+        }))
+        .sort(sortStock);
+
+      const jaugesById = new Map<number, StockItem>();
+      stockItems.forEach((jauge) => jaugesById.set(Number(jauge.id), jauge));
+
+      setStock(stockItems);
 
       setEmprunts(
-        empruntsData.map((emprunt: any) => ({
-          id: emprunt.id,
-          collab: emprunt.collaborateur ?? "",
-          date: new Date(emprunt.date_emprunt ?? new Date()).getTime(),
-          status:
-            emprunt.statut === "RETOURNE" || emprunt.statut === "rendu"
-              ? "rendu"
-              : "emprunte",
-          items: (emprunt.emprunt_jauges ?? [])
-            .map((item: any) => ({
-              rowId: item.id,
-              jaugeId: item.jauge_id,
-              diam: item.jauges?.diametre ?? "",
-              type: (item.jauges?.type_code ?? "") as JaugeType,
-              qty: Number(item.quantite ?? 0),
-            }))
-            .filter((item: { diam: string | number | null; qty: number }) => item.diam && item.qty > 0),
-        }))
+        empruntsData.map((emprunt: any) => {
+          const lignes = lignesData.filter(
+            (ligne: any) => Number(ligne.emprunt_id) === Number(emprunt.id)
+          );
+
+          return {
+            id: emprunt.id,
+            collab: emprunt.collaborateur ?? "",
+            date: new Date(emprunt.date_emprunt ?? new Date()).getTime(),
+            status:
+              emprunt.statut === "RETOURNE" || emprunt.statut === "rendu"
+                ? "rendu"
+                : "emprunte",
+            items: lignes
+              .map((ligne: any) => {
+                const jauge = jaugesById.get(Number(ligne.jauge_id));
+
+                return {
+                  rowId: ligne.id,
+                  jaugeId: ligne.jauge_id,
+                  diam: jauge?.diam ?? ligne.jauge_id,
+                  type: (jauge?.type ?? "") as JaugeType,
+                  qty: Number(ligne.quantite ?? 0),
+                };
+              })
+              .filter((item: { qty: number }) => item.qty > 0),
+          };
+        })
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
@@ -232,19 +246,8 @@ export default function Emprunts({ mode, onRetourAccueil, view = "borrowed" }: E
 
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("emprunt_jauges").delete().eq("id", rowId);
-
-        if (error) throw error;
-      }
-
-      const { data: rest, error: restError } = await supabase
-        .from("emprunt_jauges")
-        .select("id")
-        .eq("emprunt_id", empruntId);
-
-      if (restError) throw restError;
-
-      if (!rest || rest.length === 0) {
+        // On ne supprime plus la ligne emprunt_jauges.
+        // Sinon l'historique ne peut plus afficher quelles jauges avaient été empruntées.
         const { error } = await supabase
           .from("emprunts")
           .update({
@@ -337,10 +340,28 @@ async function fetchAllEmprunts() {
   for (let from = 0; ; from += step) {
     const { data, error } = await supabase
       .from("emprunts")
-      .select(
-        "id, collaborateur, date_emprunt, statut, emprunt_jauges(id, jauge_id, quantite, jauges(id, diametre, type_code))"
-      )
+      .select("id, collaborateur, date_emprunt, date_retour, statut, type_emprunt, commentaire")
       .order("date_emprunt", { ascending: false })
+      .range(from, from + step - 1);
+
+    if (error) throw new Error(error.message);
+
+    all.push(...(data ?? []));
+
+    if (!data || data.length < step) break;
+  }
+
+  return all;
+}
+
+async function fetchAllEmpruntJauges() {
+  const all: any[] = [];
+  const step = 1000;
+
+  for (let from = 0; ; from += step) {
+    const { data, error } = await supabase
+      .from("emprunt_jauges")
+      .select("id, emprunt_id, jauge_id, quantite")
       .range(from, from + step - 1);
 
     if (error) throw new Error(error.message);
