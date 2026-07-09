@@ -2,8 +2,6 @@ import { useState } from "react";
 import Sidebar, { type Page } from "./components/Sidebar";
 import TopBar from "./components/TopBar";
 import Home from "./components/emprunts/Home";
-import Dashboard from "./pages/Dashboard";
-import Stock from "./pages/Stock";
 import Emprunts from "./pages/Emprunts";
 import Commandes from "./pages/Commandes";
 import Parametres from "./pages/Parametres";
@@ -60,12 +58,7 @@ export default function App() {
   }
 
   if (mode === "collaborateur") {
-    return (
-      <Emprunts
-        mode="collaborateur"
-        onRetourAccueil={retourAccueil}
-      />
-    );
+    return <Emprunts mode="collaborateur" onRetourAccueil={retourAccueil} />;
   }
 
   return (
@@ -75,14 +68,30 @@ export default function App() {
       <main style={styles.main}>
         <TopBar title={title(page)} />
 
-        {page === "dashboard" && <Dashboard />}
-        {page === "stock" && <Stock />}
-        {page === "emprunts" && (
+        {page === "dashboard" && (
           <Emprunts
             mode="metrologie"
+            initialTab="dashboard"
             onRetourAccueil={retourAccueil}
           />
         )}
+
+        {page === "stock" && (
+          <Emprunts
+            mode="metrologie"
+            initialTab="stock"
+            onRetourAccueil={retourAccueil}
+          />
+        )}
+
+        {page === "emprunts" && (
+          <Emprunts
+            mode="metrologie"
+            initialTab="borrowed"
+            onRetourAccueil={retourAccueil}
+          />
+        )}
+
         {page === "commandes" && <Commandes />}
         {page === "parametres" && <Parametres />}
       </main>
@@ -94,7 +103,7 @@ function title(page: Page) {
   return {
     dashboard: "Tableau de bord",
     stock: "Stock des jauges",
-    emprunts: "Emprunts",
+    emprunts: "Jauges empruntées",
     commandes: "Commandes",
     parametres: "Paramètres",
   }[page];
