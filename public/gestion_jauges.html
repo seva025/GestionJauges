@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Gestion Jauges</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%238a1538%27/%3E%3Ctext x=%2732%27 y=%2740%27 font-size=%2724%27 font-family=%27Arial%27 font-weight=%27700%27 text-anchor=%27middle%27 fill=%27white%27%3EJW%3C/text%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#f3eef0;--panel:#fff;--ink:#251116;--muted:#7a6670;--line:#e3d3d8;
+  --blue:#8a1538;--blue2:#5f0f28;--nav:#3a0718;--nav2:#21030d;
+  --green:#15803d;--greenbg:#e9f8ef;--orange:#f97316;--orangebg:#fff1e6;
+  --red:#dc2626;--redbg:#feecec;--purple:#9f2249;--soft:#fff7fa;
+  --shadow:0 18px 50px rgba(78,12,31,.12);--r:18px
+}
+*{box-sizing:border-box}body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:linear-gradient(135deg,#fffafb,#f0e6ea);color:var(--ink)}button,input,select{font:inherit}button{cursor:pointer}.hide{display:none!important}
+.app{min-height:100vh}.home{min-height:100vh;display:grid;place-items:center;padding:28px}.home-card{width:min(760px,94vw);background:var(--panel);border:1px solid var(--line);border-radius:28px;box-shadow:var(--shadow);padding:42px}.brand{display:flex;align-items:center;gap:14px;margin-bottom:36px}.logo{width:62px;height:62px;border-radius:18px;background:linear-gradient(145deg,var(--nav),var(--blue));color:white;display:grid;place-items:center;font-weight:900;font-size:24px}.brand h1{margin:0;font-size:36px;letter-spacing:-1px}.brand p{margin:4px 0 0;color:var(--muted)}.choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.choice{border:1px solid var(--line);background:#fff;border-radius:20px;padding:28px;text-align:left;box-shadow:0 10px 24px rgba(78,12,31,.06)}.choice:hover{border-color:#c9899c;transform:translateY(-1px)}.choice .ico{font-size:36px}.choice h2{margin:14px 0 0;font-size:22px}.choice p{margin:0;color:var(--muted)}.metro-login{margin-top:18px;display:grid;grid-template-columns:1fr 180px;gap:12px}.input{width:100%;border:1px solid var(--line);border-radius:13px;background:#fff;padding:14px 16px;outline:none}.input:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(138,21,56,.12)}.btn{border:none;border-radius:13px;padding:13px 18px;font-weight:800;background:var(--blue);color:white}.btn:hover{background:var(--blue2)}.btn.light{background:#f5e9ee;color:var(--ink)}.btn.green{background:#16a34a}.btn.orange{background:var(--orange)}.btn.red{background:var(--red)}.btn.outline{background:white;color:var(--blue);border:1px solid #9dbce8}.btn:disabled{opacity:.45;cursor:not-allowed}.toast{position:fixed;right:24px;bottom:24px;background:#111827;color:white;padding:13px 18px;border-radius:14px;box-shadow:var(--shadow);opacity:0;transform:translateY(8px);transition:.2s;z-index:20}.toast.show{opacity:1;transform:none}
+.collab{max-width:1040px;margin:0 auto;padding:26px}.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}.topbar h1{margin:0;color:var(--blue2);font-size:28px}.topbar p{margin:4px 0 0;color:var(--muted)}.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:22px;margin-bottom:18px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.field label{display:block;margin-bottom:8px;font-weight:800}.search-row{display:grid;grid-template-columns:1fr 150px;gap:12px}.section-title{font-size:22px;margin:0 0 18px}.table{width:100%;border-collapse:collapse}.table th{font-size:13px;text-transform:uppercase;color:#667085;text-align:left;border-bottom:1px solid var(--line);padding:12px}.table td{padding:14px 12px;border-bottom:1px solid #edf1f6;font-weight:600}.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:7px 11px;font-weight:900;font-size:13px}.pill.green{color:var(--green);background:var(--greenbg)}.pill.orange{color:var(--orange);background:var(--orangebg)}.pill.red{color:var(--red);background:var(--redbg)}.tags{display:flex;gap:8px;flex-wrap:wrap}.tag{background:#f5e9ee;border-radius:999px;padding:7px 10px;font-weight:900}.info{background:#fff2f6;border:1px solid #efd0da;color:#6d0f2a;border-radius:14px;padding:14px;margin-top:18px}.validate{width:100%;padding:17px;font-size:18px;margin-top:16px}.empty{color:var(--muted);font-weight:500;padding:20px 0}.danger-text{color:var(--red)}.warn-text{color:var(--orange)}.ok-text{color:var(--green)}
+.metro{min-height:100vh;display:grid;grid-template-columns:250px 1fr}.side{background:linear-gradient(180deg,var(--nav),var(--nav2));color:white;padding:22px;display:flex;flex-direction:column;gap:22px}.side .brand{margin:0 0 8px}.side .logo{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.24)}.side h1{font-size:23px;color:white}.side p{color:#f0c7d3}.navbtn{display:flex;align-items:center;gap:12px;border:none;background:transparent;color:#f8e8ee;border-radius:12px;padding:13px 14px;text-align:left;font-weight:800;width:100%}.navbtn.active,.navbtn:hover{background:#8a1538;color:white}.spacer{flex:1}.modebox{border:1px solid rgba(255,255,255,.18);border-radius:15px;padding:16px;color:#f9dce7}.main{padding:24px 28px}.metro-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}.metro-head h2{margin:0;font-size:28px}.clock{color:var(--muted);font-weight:700}.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:18px}.stat{background:white;border:1px solid var(--line);border-radius:17px;box-shadow:var(--shadow);padding:22px}.stat small{display:block;color:#667085;font-weight:900;text-transform:uppercase;letter-spacing:.5px}.stat strong{display:block;font-size:42px;margin-top:8px}.stat.green strong{color:var(--green)}.stat.blue strong{color:var(--blue)}.stat.orange strong{color:var(--orange)}.stat.red strong{color:var(--red)}.dash-grid{display:grid;grid-template-columns:2fr 1fr;gap:18px}.panel{background:white;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:20px;margin-bottom:18px}.panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.panel h3{margin:0;font-size:22px}.alert-row{display:grid;grid-template-columns:34px 150px 100px 1fr 150px 70px;align-items:center;gap:10px;border-top:1px solid #edf1f6;padding:13px 0;font-weight:800}.smallbtn{border:1px solid #d9a8b7;background:white;color:var(--blue);border-radius:10px;padding:8px 12px;font-weight:900}.stock-low-row{display:grid;grid-template-columns:1fr 80px;align-items:center;border-top:1px solid #edf1f6;padding:13px 0;font-weight:900}.actions-row{display:flex;gap:8px;flex-wrap:wrap}.stock-actions{display:flex;gap:8px;flex-wrap:wrap}.muted{color:var(--muted)}.modal-back{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:30}.modal-back.open{display:flex}.modal{background:white;border-radius:20px;padding:24px;width:min(420px,94vw);box-shadow:var(--shadow)}.modal h3{margin:0 0 12px}.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}.tab{display:none}.tab.active{display:block}.notif-wrap{position:relative}.bell{position:relative;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;width:48px;height:48px;display:grid;place-items:center;font-size:21px;box-shadow:0 10px 24px rgba(78,12,31,.08)}.bell:hover{background:#fff7fa}.bell-badge{position:absolute;right:-5px;top:-5px;background:var(--red);color:#fff;border:2px solid #fff;border-radius:999px;min-width:22px;height:22px;display:grid;place-items:center;font-size:12px;font-weight:900}.alert-pop{position:absolute;right:0;top:58px;width:420px;max-height:70vh;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 24px 70px rgba(78,12,31,.22);z-index:50;animation:dropAlert .16s ease-out}.alert-pop:before{content:'';position:absolute;right:18px;top:-8px;width:16px;height:16px;background:#fff;border-left:1px solid var(--line);border-top:1px solid var(--line);transform:rotate(45deg)}@keyframes dropAlert{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}.alert-pop-head{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid #edf1f6}.alert-pop-head strong{font-size:18px}.alert-item{display:grid;grid-template-columns:36px 1fr;gap:10px;padding:14px 18px;border-bottom:1px solid #edf1f6}.alert-item:last-child{border-bottom:none}.alert-item b{display:block}.alert-item small{color:var(--muted);font-weight:700}.head-actions{display:flex;align-items:center;gap:14px}.dashboard-clean{display:grid;grid-template-columns:1.5fr 1fr;gap:18px}.recent-row{display:grid;grid-template-columns:120px 1fr 110px 90px;gap:12px;align-items:center;border-top:1px solid #edf1f6;padding:13px 0;font-weight:800}.recent-card{border-top:1px solid #edf1f6;padding:16px 0}.recent-card:first-of-type{border-top:none}.recent-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.recent-person{font-size:18px;font-weight:900;color:var(--ink)}.recent-meta{display:flex;align-items:center;gap:10px}.day-pill{border-radius:999px;padding:7px 12px;font-weight:900;font-size:13px;background:#edf3fa;color:var(--muted)}.day-pill.ok{background:#e9f8ef;color:var(--green)}.day-pill.warn{background:#fff1e6;color:var(--orange)}.day-pill.danger{background:#feecec;color:var(--red)}.jauge-badges{display:flex;gap:8px;flex-wrap:wrap}.jauge-chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:8px 11px;font-weight:900;font-size:14px;border:1px solid transparent}.jauge-chip.classic{background:#e9f8ef;color:var(--green);border-color:#c8efd5}.jauge-chip.md{background:#e8f1ff;color:#1d4ed8;border-color:#bfdbfe}.jauge-chip.spec{background:#f3e8ff;color:#7e22ce;border-color:#e9d5ff}.quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat.compact strong{font-size:34px}.stat-split{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.stat-half{border-radius:14px;background:#fff7fa;border:1px solid var(--line);padding:12px}.stat-half small{font-size:11px}.stat-half strong{font-size:32px;margin-top:4px}.stat-half.refs strong{color:var(--blue)}.metro-title-block small{color:var(--muted);font-weight:800}@media(max-width:900px){.metro{grid-template-columns:1fr}.side{position:static}.stat-grid,.dash-grid,.grid2,.choice-grid{grid-template-columns:1fr}.metro-login,.search-row{grid-template-columns:1fr}.alert-row{grid-template-columns:1fr}.main{padding:18px}.collab{padding:18px}}
+
+/* Logo application simple */
+.side .brand{align-items:center}
+.side .logo{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.24)}
+@media(max-width:700px){.brand{flex-direction:row;align-items:center}}
+
+
+.type-badge{display:inline-flex;align-items:center;margin-left:8px;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:900;letter-spacing:.4px;vertical-align:middle}
+.type-md{background:#e8f1ff;color:#1d4ed8;border:1px solid #bfdbfe}
+.type-spec{background:#f3e8ff;color:#7e22ce;border:1px solid #e9d5ff}
+.type-std{display:none}
+.label-diam{white-space:nowrap}
+.stock-filter{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.filter-chip{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;padding:8px 12px;font-weight:900}
+.filter-chip.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.stock-toolbar{display:grid;grid-template-columns:1fr;gap:12px;align-items:center;margin-bottom:14px}.stock-toolbar .input{max-width:520px}@media(max-width:700px){.stock-toolbar{grid-template-columns:1fr}}
+
+</style>
+</head>
+<body>
+<div id="app" class="app"></div><div id="toast" class="toast"></div>
+<div id="modal" class="modal-back"><div class="modal"><h3 id="modalTitle"></h3><p id="modalText" class="muted"></p><div id="modalBody"></div><div class="modal-actions"><button class="btn light" onclick="closeModal()">Annuler</button><button id="modalOk" class="btn">Valider</button></div></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://kzqmhbndaftxawjoocgm.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_0utUetYcfL_0XXChq6z8vA_0nIeKpek';
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const PASS='Metrologie_2024';
+
+let current='home', metroTab='dashboard', basket=[], q='', collabName='', stockSearch='', stockListSearch='', alertOpen=false, typeFilter='all', collabTypeFilter='all', borrowFocusId=null;
+let inputRenderTimer=null;
+let state={stock:[],emprunts:[]};
+
+function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function showLoading(){document.getElementById('app').innerHTML = `<div class="home"><section class="home-card"><div class="brand"><div class="logo">JW</div><div><h1>Gestion des jauges</h1><p>Connexion à Supabase...</p></div></div></section></div>`}
+function toast(msg){let t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
+
+function typeBadge(type){
+  if(type==='MD') return `<span class="type-badge type-md">MD</span>`;
+  if(type==='SPEC') return `<span class="type-badge type-spec">SPÉC</span>`;
+  return '';
+}
+function typeText(type){
+  if(type==='MD') return 'MD';
+  if(type==='SPEC') return 'SPÉC';
+  return '';
+}
+function stockLabel(s){
+  return `<span class="label-diam">Ø ${escapeHtml(s.diam)}${typeBadge(s.type)}</span>`;
+}
+function itemLabel(i){
+  return `<span class="label-diam">Ø ${escapeHtml(i.diam)}${typeBadge(i.type)}</span>`;
+}
+function sortStock(a,b){
+  const na=parseFloat(a.diam), nb=parseFloat(b.diam);
+  if(na!==nb) return na-nb;
+  return (a.type||'').localeCompare(b.type||'');
+}
+
+async function fetchAllJauges(){
+  let all=[];
+  const step=1000;
+  for(let from=0;;from+=step){
+    const to=from+step-1;
+    const {data,error}=await db.from('jauges')
+      .select('id,diametre,type_code,stock_total,en_commande')
+      .order('diametre',{ascending:true})
+      .range(from,to);
+    if(error)throw error;
+    all=all.concat(data||[]);
+    if(!data || data.length<step)break;
+  }
+  return all;
+}
+
+async function fetchAllEmprunts(){
+  let all=[];
+  const step=1000;
+  for(let from=0;;from+=step){
+    const to=from+step-1;
+    const {data,error}=await db.from('emprunts')
+      .select('id,collaborateur,date_emprunt,statut,emprunt_jauges(id,jauge_id,quantite,jauges(id,diametre,type_code))')
+      .order('date_emprunt',{ascending:false})
+      .range(from,to);
+    if(error)throw error;
+    all=all.concat(data||[]);
+    if(!data || data.length<step)break;
+  }
+  return all;
+}
+
+async function loadRemote(){
+  try{
+    const jauges=await fetchAllJauges();
+    const emprunts=await fetchAllEmprunts();
+
+    state.stock=(jauges||[]).map(j=>({
+      id:j.id,
+      diam:j.diametre,
+      type:j.type_code||'',
+      total:Number(j.stock_total||0),
+      en_commande:Number(j.en_commande||0)
+    })).sort(sortStock);
+
+    state.emprunts=(emprunts||[]).map(e=>({
+      id:e.id,
+      collab:e.collaborateur,
+      date:new Date(e.date_emprunt).getTime(),
+      status:e.statut||'emprunte',
+      items:(e.emprunt_jauges||[]).map(i=>({
+        rowId:i.id,
+        jauge_id:i.jauge_id,
+        diam:i.jauges?.diametre||'',
+        type:i.jauges?.type_code||'',
+        qty:Number(i.quantite||0)
+      })).filter(i=>i.diam&&i.qty>0)
+    }));
+  }catch(err){
+    console.error(err);
+    toast('Erreur Supabase : '+(err.message||err));
+  }
+}
+
+function setScreen(s){current=s; basket=[]; q=''; alertOpen=false; if(s==='collab'){ collabName=''; collabTypeFilter='all'; } render()}
+function render(){document.getElementById('app').innerHTML = current==='home'?home():current==='collab'?collab():metro(); bind()}
+function isTyping(){let el=document.activeElement;return el && ['INPUT','TEXTAREA','SELECT'].includes(el.tagName)}
+function delayedRenderFocus(inputId){
+  clearTimeout(inputRenderTimer);
+  inputRenderTimer=setTimeout(()=>{
+    render();
+    setTimeout(()=>{let n=document.getElementById(inputId); if(n){n.focus(); n.selectionStart=n.selectionEnd=n.value.length}},0);
+  },250);
+}
+function home(){return `<div class="home"><section class="home-card"><div class="brand"><div class="logo">JW</div><div><h1>Gestion des jauges</h1></div></div><div class="choice-grid"><button class="choice" onclick="setScreen('collab')"><div class="ico">👤</div><h2>Collaborateur</h2></button><button class="choice" onclick="document.getElementById('pwd').focus()"><div class="ico">🔒</div><h2>Métrologie</h2></button></div><div class="metro-login"><input class="input" id="pwd" type="password" placeholder="Mot de passe métrologie" onkeydown="if(event.key==='Enter')login()"><button class="btn" onclick="login()">Connexion</button></div></section></div>`}
+function login(){let v=document.getElementById('pwd').value;if(v===PASS){current='metro';render()}else toast('Mot de passe incorrect')}
+
+function collab(){
+  let results=state.stock.filter(s=>matchesDiam(s.diam,q) && (collabTypeFilter==='all' || s.type===collabTypeFilter)).slice(0,12);
+  return `<div class="collab"><div class="topbar"><div><h1>Mode collaborateur</h1><p>Consulter la disponibilité et emprunter des jauges</p></div><button class="btn light" onclick="setScreen('home')">↩ Déconnexion</button></div>
+  <section class="card"><div class="grid2"><div class="field"><label>1. Votre nom</label><input id="collabName" class="input" value="${escapeHtml(collabName)}" placeholder="" autocomplete="off"></div><div class="field"><label>2. Rechercher une jauge</label><input id="q" class="input" value="${escapeHtml(q)}" placeholder="ex : 2.503"></div></div></section>
+  <section class="card"><div class="panel-head"><h2 class="section-title">Disponibilité</h2></div>${collabFilterButtons()}${results.length?`<table class="table"><thead><tr><th>Jauge</th><th>Disponible</th><th>Action</th></tr></thead><tbody>${results.map(s=>{let a=avail(s);return `<tr><td>${stockLabel(s)}</td><td>${a>0?`<span class="pill green">${a} en stock</span>`:ordered(s)>0?`<span class="pill orange">En commande : ${ordered(s)}</span>`:`<span class="pill red">Non disponible</span>`}</td><td><button class="btn" ${a<=0?'disabled':''} onclick="addBasket(${s.id})">${a>0?'Ajouter':ordered(s)>0?'En commande':'Indisponible'}</button></td></tr>`}).join('')}</tbody></table>`:`<div class="empty">Aucune jauge trouvée.</div>`}</section>
+  <section class="card"><h2 class="section-title">Emprunt à valider</h2>${basket.length?`<div class="tags">${basket.map((id,i)=>{let s=stockById(id);return `<span class="tag">${s?stockLabel(s):'Jauge'} <button class="smallbtn" onclick="basket.splice(${i},1);render()">×</button></span>`}).join('')}</div>`:`<div class="empty">Aucune jauge sélectionnée.</div>`}<button class="btn validate" onclick="validateBorrow()">VALIDER L’EMPRUNT (${basket.length})</button><div class="info">Merci de rendre les jauges au service Métrologie après utilisation.</div></section></div>`;
+}
+
+function bind(){
+  let cn=document.getElementById('collabName');
+  if(cn)cn.addEventListener('input',e=>{collabName=e.target.value.toUpperCase();e.target.value=collabName});
+  let qe=document.getElementById('q');
+  if(qe)qe.addEventListener('input',e=>{q=e.target.value.trim(); delayedRenderFocus('q')});
+  let ss=document.getElementById('stockSearch');
+  if(ss)ss.addEventListener('input',e=>{borrowFocusId=null; stockSearch=e.target.value.trim(); delayedRenderFocus('stockSearch')});
+  let sls=document.getElementById('stockListSearch');
+  if(sls)sls.addEventListener('input',e=>{stockListSearch=e.target.value.trim(); delayedRenderFocus('stockListSearch')});
+}
+function stockById(id){return state.stock.find(s=>Number(s.id)===Number(id))}
+function borrowedById(id){
+  return state.emprunts.filter(e=>e.status==='emprunte').flatMap(e=>e.items).filter(i=>Number(i.jauge_id)===Number(id)).reduce((a,b)=>a+b.qty,0);
+}
+function avail(s){return Math.max(0,Number(s.total||0)-borrowedById(s.id))}
+function ordered(s){return Number(s.en_commande||0)}
+function days(ts){return Math.floor((Date.now()-ts)/86400000)}
+function fmt(ts){return new Date(ts).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}
+
+function addBasket(id){
+  let s=stockById(id);
+  if(!s)return;
+  let already=basket.filter(x=>Number(x)===Number(id)).length;
+  if(avail(s)-already<=0)return toast('Stock insuffisant');
+  basket.push(id);render();
+}
+
+async function validateBorrow(){
+  if(!collabName.trim())return toast('Saisir le nom du collaborateur');
+  if(!basket.length)return toast('Ajouter au moins une jauge');
+  let items=[];
+  basket.forEach(id=>{let it=items.find(x=>Number(x.id)===Number(id));if(it)it.qty++;else items.push({id,qty:1})});
+  for(const it of items){let s=stockById(it.id);if(!s||avail(s)<it.qty)return toast('Stock insuffisant pour '+(s?`Ø ${s.diam} ${typeText(s.type)}`:'une jauge'))}
+  try{
+    const {data:emp,error:eErr}=await db.from('emprunts').insert({collaborateur:collabName.trim().toUpperCase(),statut:'emprunte'}).select('id').single();
+    if(eErr)throw eErr;
+    const rows=items.map(it=>({emprunt_id:emp.id,jauge_id:it.id,quantite:it.qty}));
+    const {error:iErr}=await db.from('emprunt_jauges').insert(rows);if(iErr)throw iErr;
+    basket=[];q='';collabName='';await loadRemote();toast('Emprunt enregistré');render();
+  }catch(err){console.error(err);toast('Erreur emprunt : '+(err.message||err))}
+}
+
+function metro(){return `<div class="metro"><aside class="side"><div class="brand"><div class="logo">JW</div><div><h1>Gestion Jauges</h1><p>Métrologie</p></div></div><nav>${nav('dashboard','🏠 Tableau de bord')}${nav('stock','📦 Stock des jauges')}${nav('borrowed','📤 Jauges empruntées')}${nav('history','📜 Historique')}</nav><div class="spacer"></div><div class="modebox">Mode actif<br><strong>MÉTROLOGIE</strong></div><button class="navbtn" onclick="setScreen('home')">↩ Déconnexion</button></aside><main class="main"><div class="metro-head"><div class="metro-title-block"><h2>${tabTitle()}</h2><small>${new Date().toLocaleDateString('fr-FR')} · ${new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</small></div><div class="head-actions">${alertBell()}<div class="clock">MÉTROLOGIE</div></div></div>${tabContent()}</main></div>`}
+function nav(t,label){return `<button class="navbtn ${metroTab===t?'active':''}" onclick="metroTab='${t}';alertOpen=false;render()">${label}</button>`}
+function tabTitle(){return {dashboard:'Tableau de bord',stock:'Stock des jauges',borrowed:'Jauges empruntées',history:'Historique'}[metroTab]}
+function stats(){
+  let total=state.stock.reduce((a,s)=>a+Number(s.total||0),0),
+      empr=state.emprunts.filter(e=>e.status==='emprunte').flatMap(e=>e.items).reduce((a,i)=>a+i.qty,0),
+      refs=state.stock.filter(s=>avail(s)>0).length,
+      alerts=alertList().length;
+  return{total,empr,stock:total-empr,refs,alerts}
+}
+function alertList(){
+  let a=[];
+  state.emprunts.filter(e=>e.status==='emprunte'&&days(e.date)>=30).forEach(e=>e.items.forEach(i=>a.push({type:'late',icon:'🔴',name:e.collab,diam:i.diam,typeCode:i.type,msg:`${days(e.date)} jours`,info:`Emprunt du ${fmt(e.date)}`})));
+  state.emprunts.filter(e=>e.status==='emprunte'&&days(e.date)>=20&&days(e.date)<30).forEach(e=>e.items.forEach(i=>a.push({type:'warn',icon:'🟠',name:e.collab,diam:i.diam,typeCode:i.type,msg:`${days(e.date)} jours`,info:'À surveiller avant 30 jours'})));
+  state.stock.filter(s=>Number(s.en_commande||0)>0).forEach(s=>a.push({type:'order',icon:'🔵',name:'Commande en attente',diam:s.diam,typeCode:s.type,msg:`${s.en_commande} à réceptionner`,info:'Réception partielle possible'}));
+  return a;
+}
+function openAlertTarget(type,diam){
+  alertOpen=false;
+  if(type==='order'){metroTab='stock';stockListSearch=diam||'';}
+  else{metroTab='borrowed';stockSearch=diam||'';}
+  render();
+}
+function dayClassFor(ts,status='emprunte'){
+  if(status!=='emprunte') return 'ok-text';
+  const d=days(ts);
+  if(d>=30) return 'danger-text';
+  if(d>=20) return 'warn-text';
+  return 'muted';
+}
+
+function dayPillClass(ts,status='emprunte'){
+  if(status!=='emprunte') return 'ok';
+  const d=days(ts);
+  if(d>=30) return 'danger';
+  if(d>=20) return 'warn';
+  return 'ok';
+}
+function jaugeChip(i){
+  const cls = i.type==='MD' ? 'md' : i.type==='SPEC' ? 'spec' : 'classic';
+  const suffix = i.type==='MD' ? ' MD' : i.type==='SPEC' ? ' SPÉC' : '';
+  return `<span class="jauge-chip ${cls}">Ø ${escapeHtml(i.diam)}${suffix}${i.qty>1?` x${i.qty}`:''}</span>`;
+}
+function alertBell(){let al=alertList();return `<div class="notif-wrap"><button class="bell" onclick="alertOpen=!alertOpen;render()">🔔${al.length?`<span class="bell-badge">${al.length}</span>`:''}</button>${alertOpen?`<div class="alert-pop"><div class="alert-pop-head"><strong>🔔 Alertes</strong><button class="smallbtn" onclick="alertOpen=false;render()">Fermer</button></div>${al.length?al.map(x=>`<div class="alert-item clickable" onclick="openAlertTarget('${x.type}','${escapeHtml(x.diam)}')"><span>${x.icon}</span><div><b>${escapeHtml(x.name)}</b><small>Ø ${escapeHtml(x.diam)} ${typeBadge(x.typeCode)} — ${escapeHtml(x.msg)}</small><br><small>${escapeHtml(x.info)}</small></div></div>`).join(''):'<div class="alert-item"><span>✅</span><div><b>Aucune alerte</b><small>Tout est à jour</small></div></div>'}</div>`:''}</div>`}
+function tabContent(){if(metroTab==='stock')return stockTab(); if(metroTab==='borrowed')return borrowedTab(); if(metroTab==='history')return historyTab(); return dashboardTab()}
+function dashboardTab(){
+  let st=stats(), active=state.emprunts.filter(e=>e.status==='emprunte').slice(0,8);
+  return `<div class="stat-grid"><div class="stat green compact"><small>Jauges en stock</small><div class="stat-split"><div class="stat-half"><small>Physiques</small><strong>${st.stock}</strong></div><div class="stat-half refs"><small>Références Ø</small><strong>${st.refs}</strong></div></div></div><div class="stat blue compact"><small>Jauges empruntées</small><strong>${st.empr}</strong></div><div class="stat red compact"><small>Alertes</small><strong>${st.alerts}</strong></div></div>
+  <div class="dashboard-clean"><section class="panel"><div class="panel-head"><h3>Derniers emprunts en cours</h3><button class="smallbtn" onclick="borrowFocusId=null;stockSearch='';metroTab='borrowed';render()">Voir les emprunts</button></div>${active.length?active.map(e=>`<div class="recent-card"><div class="recent-top"><div class="recent-person">👤 ${escapeHtml(e.collab)}</div><div class="recent-meta"><span class="day-pill ${dayPillClass(e.date,e.status)}">${days(e.date)} jour${days(e.date)>1?'s':''}</span><button class="smallbtn" onclick="borrowFocusId=${e.id};stockSearch='';metroTab='borrowed';render()">Ranger</button></div></div><div class="jauge-badges">${e.items.map(i=>jaugeChip(i)).join('')}</div></div>`).join(''):'<div class="empty">Aucun emprunt en cours.</div>'}</section>
+  <div><section class="panel"><div class="panel-head"><h3>Actions rapides</h3></div><div class="quick-grid"><button class="btn" onclick="metroTab='stock';render()">📦 Stock</button><button class="btn green" onclick="metroTab='borrowed';render()">✅ Ranger</button><button class="btn orange" onclick="metroTab='stock';render()">🚚 Commandes</button><button class="btn outline" onclick="metroTab='history';render()">📜 Historique</button></div></section>
+  <section class="panel"><div class="panel-head"><h3>Commandes en cours</h3><button class="smallbtn" onclick="metroTab='stock';render()">Voir</button></div>${state.stock.filter(s=>Number(s.en_commande||0)>0).map(s=>`<div class="stock-low-row"><strong>${stockLabel(s)}</strong><span class="pill orange">${s.en_commande} à recevoir</span></div>`).join('')||'<div class="empty">Aucune commande en cours.</div>'}</section></div></div>`;
+}
+function empruntsTable(data){return `<table class="table"><thead><tr><th>Collaborateur</th><th>Jauges</th><th>Date</th><th>Jours</th><th>Statut</th></tr></thead><tbody>${data.map(e=>`<tr><td>${escapeHtml(e.collab)}</td><td><div class="tags">${e.items.map(i=>`<span class="tag">${itemLabel(i)} x${i.qty}</span>`).join('')}</div></td><td>${fmt(e.date)}</td><td class="${dayClassFor(e.date,e.status)}">${days(e.date)}</td><td>${e.status==='rendu'?'<span class="pill green">Rendu</span>':'<span class="pill orange">En cours</span>'}</td></tr>`).join('')}</tbody></table>`}
+
+function collabFilterButtons(){return `<div class="stock-filter"><button class="filter-chip ${collabTypeFilter==='all'?'active':''}" onclick="collabTypeFilter='all';render()">Toutes</button><button class="filter-chip ${collabTypeFilter===''?'active':''}" onclick="collabTypeFilter='';render()">Classiques</button><button class="filter-chip ${collabTypeFilter==='MD'?'active':''}" onclick="collabTypeFilter='MD';render()">MD</button><button class="filter-chip ${collabTypeFilter==='SPEC'?'active':''}" onclick="collabTypeFilter='SPEC';render()">SPÉC</button></div>`}
+function stockFilterButtons(){return `<div class="stock-filter"><button class="filter-chip ${typeFilter==='all'?'active':''}" onclick="typeFilter='all';render()">Toutes</button><button class="filter-chip ${typeFilter===''?'active':''}" onclick="typeFilter='';render()">Classiques</button><button class="filter-chip ${typeFilter==='MD'?'active':''}" onclick="typeFilter='MD';render()">MD</button><button class="filter-chip ${typeFilter==='SPEC'?'active':''}" onclick="typeFilter='SPEC';render()">SPÉC</button></div>`}
+function stockTab(){
+  let data=state.stock.filter(s=>(typeFilter==='all'||s.type===typeFilter) && matchesDiam(s.diam,stockListSearch));
+  return `<section class="panel"><div class="panel-head"><h3>Stock</h3><button class="btn" onclick="addStockModal()">+ Ajouter une jauge</button></div><div class="stock-toolbar"><input id="stockListSearch" class="input" value="${escapeHtml(stockListSearch)}" placeholder="Rechercher un Ø dans le stock, ex : 2.503"></div>${stockFilterButtons()}<table class="table"><thead><tr><th>Jauge</th><th>Total</th><th>Disponible</th><th>En commande</th><th>Action</th></tr></thead><tbody>${data.map(s=>`<tr><td>${stockLabel(s)}</td><td>${s.total}</td><td><span class="pill ${avail(s)>0?'green':'red'}">${avail(s)}</span></td><td>${ordered(s)>0?`<span class="pill orange">${ordered(s)}</span>`:'—'}</td><td><div class="stock-actions"><button class="smallbtn" onclick="removeQtyModal(${s.id})">Retirer quantité</button><button class="smallbtn" onclick="removeAllModal(${s.id})">Retirer tout</button><button class="smallbtn" onclick="orderQtyModal(${s.id})">Mettre en commande</button>${ordered(s)>0?`<button class="smallbtn" onclick="receiveOrder(${s.id})">Réceptionner</button>`:''}</div></td></tr>`).join('') || '<tr><td colspan="5" class="empty">Aucune jauge trouvée.</td></tr>'}</tbody></table></section>`;
+}
+function borrowedRows(){let rows=[];state.emprunts.filter(e=>e.status==='emprunte').forEach(e=>{if(borrowFocusId!==null && Number(e.id)!==Number(borrowFocusId))return;e.items.forEach(i=>{if(matchesDiam(i.diam,stockSearch))rows.push({e,i})})});return rows}
+function borrowedTab(){let rows=borrowedRows();let focus=borrowFocusId!==null?state.emprunts.find(e=>Number(e.id)===Number(borrowFocusId)):null;return `<section class="panel"><h3>${focus?`Emprunt de ${escapeHtml(focus.collab)}`:'Rechercher une jauge empruntée'}</h3><p class="muted">${focus?'Toutes les jauges de cet emprunt sont affichées.':'Recherche par Ø pour ranger après contrôle.'}</p>${focus?`<button class="smallbtn" onclick="borrowFocusId=null;stockSearch='';render()">Afficher tous les emprunts</button><br><br>`:`<div class="search-row"><input id="stockSearch" class="input" value="${escapeHtml(stockSearch)}" placeholder="ex : 2.503"><button class="btn">Rechercher</button></div><br>`}<table class="table"><thead><tr><th>Jauge</th><th>Collaborateur</th><th>Date emprunt</th><th>Jours</th><th>Action</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${itemLabel(r.i)} x${r.i.qty}</td><td>${escapeHtml(r.e.collab)}</td><td>${fmt(r.e.date)}</td><td class="${dayClassFor(r.e.date,r.e.status)}">${days(r.e.date)}</td><td><button class="smallbtn" onclick="rangeOne(${r.e.id},${r.i.rowId})">✅ Rangé</button></td></tr>`).join('')||'<tr><td colspan="5" class="empty">Aucune jauge empruntée trouvée.</td></tr>'}</tbody></table><div class="info">Clique sur « Rangé » uniquement après contrôle physique par la Métrologie.</div></section>`}
+function historyTab(){return `<section class="panel"><h3>Historique</h3>${empruntsTable(state.emprunts)}</section>`}
+async function rangeOne(id,rowId){
+  let e=state.emprunts.find(x=>Number(x.id)===Number(id));if(!e)return;
+  let it=e.items.find(x=>Number(x.rowId)===Number(rowId));if(!it)return;
+  openModal('Ranger une jauge',`Ø ${it.diam} ${typeText(it.type)} — ${e.collab} — quantité sortie : ${it.qty}`,'<input id="mqty" class="input" type="number" min="1" value="1">',async()=>{
+    let qty=+document.getElementById('mqty').value;if(qty<1)return toast('Quantité incorrecte');if(qty>it.qty)return toast("Quantité supérieure à l'emprunt");
+    try{
+      if(qty<it.qty){const {error}=await db.from('emprunt_jauges').update({quantite:it.qty-qty}).eq('id',it.rowId);if(error)throw error}
+      else{const {error}=await db.from('emprunt_jauges').delete().eq('id',it.rowId);if(error)throw error}
+      const {data:rest,error:rErr}=await db.from('emprunt_jauges').select('id').eq('emprunt_id',id);if(rErr)throw rErr;
+      if(!rest||rest.length===0){const {error:uErr}=await db.from('emprunts').update({statut:'rendu'}).eq('id',id);if(uErr)throw uErr}
+      await loadRemote();closeModal();toast('Jauge(s) rangée(s)');render();
+    }catch(err){console.error(err);toast('Erreur rangement : '+(err.message||err))}
+  })
+}
+function openModal(title,text,body,ok){document.getElementById('modalTitle').textContent=title;document.getElementById('modalText').textContent=text;document.getElementById('modalBody').innerHTML=body||'';document.getElementById('modalOk').onclick=ok;document.getElementById('modal').classList.add('open')}
+function closeModal(){document.getElementById('modal').classList.remove('open')}
+function normalizeDiam(v){return String(v||'').trim().replace(',', '.')}
+function matchesDiam(diam, query){const qq=normalizeDiam(query);if(!qq)return true;return normalizeDiam(diam).startsWith(qq)}
+async function orderQtyModal(id){let s=stockById(id);if(!s)return;openModal('Mettre en commande',`Diamètre Ø ${s.diam} ${typeText(s.type)}`,'<input id="mqty" class="input" type="number" min="1" value="1">',async()=>{let qty=+document.getElementById('mqty').value;if(qty<1)return toast('Quantité incorrecte');try{const {error}=await db.from('jauges').update({en_commande:ordered(s)+qty}).eq('id',s.id);if(error)throw error;await loadRemote();closeModal();toast('Commande enregistrée');render()}catch(err){console.error(err);toast('Erreur commande : '+(err.message||err))}})}
+async function receiveOrder(id){let s=stockById(id);let left=s?ordered(s):0;if(!s||left<=0)return toast('Aucune commande');openModal('Réceptionner la commande',`Commande Ø ${s.diam} ${typeText(s.type)} — reste à recevoir : ${left}`,'<input id="mqty" class="input" type="number" min="1" value="1">',async()=>{let qty=+document.getElementById('mqty').value;if(qty<1)return toast('Quantité incorrecte');if(qty>left)return toast('Impossible : quantité supérieure au restant');try{const {error}=await db.from('jauges').update({stock_total:s.total+qty,en_commande:left-qty}).eq('id',s.id);if(error)throw error;await loadRemote();closeModal();toast('Commande réceptionnée');render()}catch(err){console.error(err);toast('Erreur réception : '+(err.message||err))}})}
+async function addStockModal(){
+  openModal('Ajouter des jauges','Ajouter une quantité au stock.','<input id="mdiam" class="input" placeholder="Diamètre ex : 2.503"><br><br><select id="mtype" class="input"><option value="">Classique</option><option value="MD">Métal dur (MD)</option><option value="SPEC">Spéciale (SPÉC)</option></select><br><br><input id="mqty" class="input" type="number" min="1" value="1">',async()=>{
+    let diam=normalizeDiam(document.getElementById('mdiam').value), type=document.getElementById('mtype').value, qty=+document.getElementById('mqty').value;
+    if(!diam||qty<1)return toast('Valeur incorrecte');
+    let s=state.stock.find(x=>x.diam===diam&&x.type===type);
+    try{
+      if(s){const {error}=await db.from('jauges').update({stock_total:s.total+qty}).eq('id',s.id);if(error)throw error}
+      else{const {error}=await db.from('jauges').insert({diametre:diam,type_code:type,stock_total:qty,en_commande:0});if(error)throw error}
+      await loadRemote();closeModal();toast('Stock mis à jour');render();
+    }catch(err){console.error(err);toast('Erreur stock : '+(err.message||err))}
+  })
+}
+async function removeQtyModal(id){let s=stockById(id);if(!s)return;openModal('Retirer une quantité',`Diamètre Ø ${s.diam} ${typeText(s.type)}`,'<input id="mqty" class="input" type="number" min="1" value="1">',async()=>{let qty=+document.getElementById('mqty').value;if(qty<1)return toast('Quantité incorrecte');let max=avail(s);if(qty>max)return toast('Impossible : quantité empruntée ou stock insuffisant');try{const {error}=await db.from('jauges').update({stock_total:s.total-qty}).eq('id',s.id);if(error)throw error;await loadRemote();closeModal();toast('Stock mis à jour');render()}catch(err){console.error(err);toast('Erreur retrait : '+(err.message||err))}})}
+async function removeAllModal(id){let s=stockById(id);if(!s)return;openModal('Retirer tout le disponible',`Retirer toutes les jauges disponibles Ø ${s.diam} ${typeText(s.type)} ?`,null,async()=>{let qty=avail(s);if(qty<=0)return toast('Aucune jauge disponible à retirer');try{const {error}=await db.from('jauges').update({stock_total:s.total-qty}).eq('id',s.id);if(error)throw error;await loadRemote();closeModal();toast('Stock mis à jour');render()}catch(err){console.error(err);toast('Erreur retrait : '+(err.message||err))}})}
+
+(async()=>{showLoading();await loadRemote();render();setInterval(async()=>{await loadRemote(); if(current!=='home' && !isTyping()) render()},5000)})();
+</script>
+</body>
+</html>
