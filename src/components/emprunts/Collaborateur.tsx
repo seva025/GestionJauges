@@ -267,7 +267,10 @@ function renderJaugeLabel(jauge: StockItem) {
 }
 
 function normalizeDiam(value: string | number | null | undefined) {
-  return String(value ?? "").trim().replace(",", ".");
+  return String(value ?? "")
+    .trim()
+    .replace(",", ".")
+    .replace(/\.$/, "");
 }
 
 function matchesDiam(diam: string | number | null | undefined, query: string) {

@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
-import Home from "../components/emprunts/Home";
 import Collaborateur from "../components/emprunts/Collaborateur";
 import MetroDashboard from "../components/emprunts/MetroDashboard";
 import { supabase } from "../services/supabase";
 
-type Screen = "home" | "collab" | "metro";
+type AppMode = "collaborateur" | "metrologie";
 type MetroTab = "dashboard" | "stock" | "borrowed" | "history";
 type JaugeType = "" | "MD" | "SPEC";
+
+type EmpruntsProps = {
+  mode: AppMode;
+  onRetourAccueil: () => void;
+};
 
 type StockItem = {
   id: number;
@@ -30,12 +34,8 @@ type EmpruntItem = {
   }[];
 };
 
-const PASS = "Metrologie_2024";
-
-export default function Emprunts() {
-  const [screen, setScreen] = useState<Screen>("home");
+export default function Emprunts({ mode, onRetourAccueil }: EmpruntsProps) {
   const [metroTab, setMetroTab] = useState<MetroTab>("dashboard");
-  const [password, setPassword] = useState("");
   const [stock, setStock] = useState<StockItem[]>([]);
   const [emprunts, setEmprunts] = useState<EmpruntItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -113,25 +113,6 @@ export default function Emprunts() {
     window.setTimeout(() => setToast(""), 3000);
   }
 
-  function loginMetro() {
-    if (password === PASS) {
-      setScreen("metro");
-      setPassword("");
-      return;
-    }
-
-    showToast("Mot de passe incorrect");
-  }
-
-  function logout() {
-    setScreen("home");
-    setMetroTab("dashboard");
-    setPassword("");
-    setCollabName("");
-    setSearch("");
-    setBasket([]);
-  }
-
   function borrowedByJaugeId(jaugeId: number) {
     return emprunts
       .filter((emprunt) => emprunt.status === "emprunte")
@@ -150,6 +131,7 @@ export default function Emprunts() {
 
   function addBasket(jaugeId: number) {
     const jauge = stock.find((item) => item.id === jaugeId);
+
     if (!jauge) return;
 
     if (available(jauge) - borrowedInBasket(jaugeId) <= 0) {
@@ -233,18 +215,9 @@ export default function Emprunts() {
     return <div style={styles.loading}>Connexion à Supabase...</div>;
   }
 
-  return (
-    <div style={styles.page}>
-      {screen === "home" && (
-        <Home
-          password={password}
-          setPassword={setPassword}
-          onCollaborateur={() => setScreen("collab")}
-          onMetroLogin={loginMetro}
-        />
-      )}
-
-      {screen === "collab" && (
+  if (mode === "collaborateur") {
+    return (
+      <>
         <Collaborateur
           stock={stock}
           collabName={collabName}
@@ -259,58 +232,85 @@ export default function Emprunts() {
           borrowedInBasket={borrowedInBasket}
           onAddBasket={addBasket}
           onValidateBorrow={validateBorrow}
-          onLogout={logout}
+          onLogout={onRetourAccueil}
+        />
+
+        {toast && <div style={styles.toast}>{toast}</div>}
+      </>
+    );
+  }
+
+  return (
+    <div style={styles.page}>
+      <div style={styles.metroNav}>
+        <button
+          style={navStyle(metroTab === "dashboard")}
+          onClick={() => setMetroTab("dashboard")}
+        >
+          Tableau de bord
+        </button>
+
+        <button
+          style={navStyle(metroTab === "stock")}
+          onClick={() => setMetroTab("stock")}
+        >
+          Stock
+        </button>
+
+        <button
+          style={navStyle(metroTab === "borrowed")}
+          onClick={() => setMetroTab("borrowed")}
+        >
+          Jauges empruntées
+        </button>
+
+        <button
+          style={navStyle(metroTab === "history")}
+          onClick={() => setMetroTab("history")}
+        >
+          Historique
+        </button>
+
+        <button style={styles.logout} onClick={onRetourAccueil}>
+          Déconnexion
+        </button>
+      </div>
+
+      {metroTab === "dashboard" && (
+        <MetroDashboard
+          jauges={stock.map((jauge) => ({
+            id: jauge.id,
+            diametre: jauge.diam,
+            type_code: jauge.type,
+            stock_total: jauge.total,
+            en_commande: jauge.enCommande,
+          }))}
+          emprunts={emprunts}
+          onGoStock={() => setMetroTab("stock")}
+          onGoBorrowed={() => setMetroTab("borrowed")}
+          onGoHistory={() => setMetroTab("history")}
         />
       )}
 
-      {screen === "metro" && (
-        <div>
-          <div style={styles.metroNav}>
-            <button style={navStyle(metroTab === "dashboard")} onClick={() => setMetroTab("dashboard")}>
-              Tableau de bord
-            </button>
-            <button style={navStyle(metroTab === "stock")} onClick={() => setMetroTab("stock")}>
-              Stock
-            </button>
-            <button style={navStyle(metroTab === "borrowed")} onClick={() => setMetroTab("borrowed")}>
-              Jauges empruntées
-            </button>
-            <button style={navStyle(metroTab === "history")} onClick={() => setMetroTab("history")}>
-              Historique
-            </button>
-            <button style={styles.logout} onClick={logout}>
-              Déconnexion
-            </button>
-          </div>
-
-          {metroTab === "dashboard" && (
-            <MetroDashboard
-              jauges={stock.map((jauge) => ({
-                id: jauge.id,
-                diametre: jauge.diam,
-                type_code: jauge.type,
-                stock_total: jauge.total,
-                en_commande: jauge.enCommande,
-              }))}
-              emprunts={emprunts}
-              onGoStock={() => setMetroTab("stock")}
-              onGoBorrowed={() => setMetroTab("borrowed")}
-              onGoHistory={() => setMetroTab("history")}
-            />
-          )}
-
-          {metroTab !== "dashboard" && (
-            <section style={styles.placeholder}>
-              <h2>{metroTab}</h2>
-              <p>Écran en cours de reconstruction.</p>
-            </section>
-          )}
-        </div>
+      {metroTab !== "dashboard" && (
+        <section style={styles.placeholder}>
+          <h2>{getMetroTitle(metroTab)}</h2>
+          <p>Écran en cours de reconstruction.</p>
+        </section>
       )}
 
       {toast && <div style={styles.toast}>{toast}</div>}
     </div>
   );
+}
+
+function getMetroTitle(tab: MetroTab) {
+  return {
+    dashboard: "Tableau de bord",
+    stock: "Stock",
+    borrowed: "Jauges empruntées",
+    history: "Historique",
+  }[tab];
 }
 
 function navStyle(active: boolean): React.CSSProperties {
