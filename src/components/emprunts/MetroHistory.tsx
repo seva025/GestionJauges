@@ -30,7 +30,7 @@ export default function MetroHistory({ retours }: Props) {
             <th style={styles.th}>Jauge rangée</th>
             <th style={styles.th}>Quantité</th>
             <th style={styles.th}>Date de rangement</th>
-            <th style={styles.th}>Emprunt</th>
+            <th style={styles.th}>Statut</th>
           </tr>
         </thead>
 
@@ -50,7 +50,11 @@ export default function MetroHistory({ retours }: Props) {
                 </span>
               </td>
               <td style={styles.td}>{formatDate(retour.dateRetour)}</td>
-              <td style={styles.td}>#{retour.empruntId}</td>
+              <td style={styles.td}>
+                <span style={{ ...styles.pill, ...styles.greenPill }}>
+                  Rangée
+                </span>
+              </td>
             </tr>
           ))}
 
