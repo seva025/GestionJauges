@@ -64,7 +64,16 @@ export default function MetroDashboard({
     return stockTotal - emprunte > 0;
   }).length;
 
-  const alertes = empruntsEnCours.filter((emprunt) => days(emprunt.date) >= 30);
+  const alertes = empruntsEnCours.flatMap((emprunt) =>
+    emprunt.items
+      .filter(() => days(emprunt.date) >= 20)
+      .map((item) => ({
+        empruntId: emprunt.id,
+        collab: emprunt.collab,
+        date: emprunt.date,
+        item,
+      }))
+  );
 
   const commandes = jauges.filter((jauge) => Number(jauge.en_commande ?? 0) > 0);
 
@@ -169,6 +178,49 @@ export default function MetroDashboard({
                 📜 Historique
               </button>
             </div>
+          </section>
+
+          <section style={styles.panel}>
+            <div style={styles.panelHead}>
+              <h3 style={styles.panelTitle}>Alertes emprunts</h3>
+              <button style={styles.smallBtn} onClick={onGoBorrowed}>
+                Voir
+              </button>
+            </div>
+
+            {alertes.length === 0 ? (
+              <div style={styles.empty}>Aucune jauge à surveiller.</div>
+            ) : (
+              alertes.slice(0, 8).map(({ empruntId, collab, date, item }) => {
+                const late = days(date) >= 30;
+                return (
+                  <button
+                    key={`${empruntId}-${item.rowId}`}
+                    style={styles.alertRow}
+                    onClick={onGoBorrowed}
+                  >
+                    <span>{late ? "🔴" : "🟠"}</span>
+                    <span style={styles.alertText}>
+                      <strong>{collab}</strong>
+                      <small>
+                        Ø {item.diam}
+                        {item.type === "MD" ? " MD" : ""}
+                        {item.type === "SPEC" ? " SPÉC" : ""}
+                        {item.qty > 1 ? ` ×${item.qty}` : ""}
+                      </small>
+                    </span>
+                    <span
+                      style={{
+                        ...styles.alertDay,
+                        ...(late ? styles.alertDayLate : styles.alertDayWarn),
+                      }}
+                    >
+                      {days(date)} j
+                    </span>
+                  </button>
+                );
+              })
+            )}
           </section>
 
           <section style={styles.panel}>
@@ -439,6 +491,39 @@ const styles: Record<string, React.CSSProperties> = {
     background: "white",
     color: "#8a1538",
     cursor: "pointer",
+  },
+  alertRow: {
+    width: "100%",
+    display: "grid",
+    gridTemplateColumns: "30px 1fr auto",
+    alignItems: "center",
+    gap: 10,
+    border: "none",
+    borderTop: "1px solid #edf1f6",
+    background: "white",
+    padding: "13px 0",
+    textAlign: "left",
+    cursor: "pointer",
+  },
+  alertText: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 3,
+    color: "#251116",
+  },
+  alertDay: {
+    borderRadius: 999,
+    padding: "6px 9px",
+    fontWeight: 900,
+    fontSize: 12,
+  },
+  alertDayLate: {
+    color: "#dc2626",
+    background: "#feecec",
+  },
+  alertDayWarn: {
+    color: "#f97316",
+    background: "#fff1e6",
   },
   stockLowRow: {
     display: "grid",

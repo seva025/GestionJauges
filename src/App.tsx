@@ -66,7 +66,7 @@ export default function App() {
       <Sidebar page={page} setPage={setPage} onLogout={retourAccueil} />
 
       <main style={styles.main}>
-        <TopBar title={title(page)} />
+        <TopBar title={title(page)} onOpenBorrowed={() => setPage("emprunts")} />
 
         {page === "dashboard" && (
           <Dashboard
