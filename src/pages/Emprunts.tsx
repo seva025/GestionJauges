@@ -41,6 +41,7 @@ type EmpruntItem = {
 export default function Emprunts({ mode, onRetourAccueil, view = "borrowed" }: EmpruntsProps) {
   const [stock, setStock] = useState<StockItem[]>([]);
   const [emprunts, setEmprunts] = useState<EmpruntItem[]>([]);
+  const [historyEmprunts, setHistoryEmprunts] = useState<EmpruntItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState("");
   const [error, setError] = useState("");
@@ -59,6 +60,7 @@ export default function Emprunts({ mode, onRetourAccueil, view = "borrowed" }: E
       const jaugesData = await fetchAllJauges();
       const empruntsData = await fetchAllEmprunts();
       const lignesData = await fetchAllEmpruntJauges();
+      const historiqueLignesData = await fetchAllEmpruntJaugesHistorique();
 
       const stockItems: StockItem[] = jaugesData
         .map((jauge: any) => ({
@@ -75,9 +77,9 @@ export default function Emprunts({ mode, onRetourAccueil, view = "borrowed" }: E
 
       setStock(stockItems);
 
-      setEmprunts(
+      const mapEmprunts = (lineRows: any[], useSnapshot: boolean): EmpruntItem[] =>
         empruntsData.map((emprunt: any) => {
-          const lignes = lignesData.filter(
+          const lignes = lineRows.filter(
             (ligne: any) => Number(ligne.emprunt_id) === Number(emprunt.id)
           );
 
@@ -88,10 +90,14 @@ export default function Emprunts({ mode, onRetourAccueil, view = "borrowed" }: E
               const returnedQty = Number(ligne.quantite_retournee ?? 0);
 
               return {
-                rowId: ligne.id,
-                jaugeId: ligne.jauge_id,
-                diam: jauge?.diam ?? ligne.jauge_id,
-                type: (jauge?.type ?? "") as JaugeType,
+                rowId: Number(ligne.ligne_id ?? ligne.id),
+                jaugeId: Number(ligne.jauge_id),
+                diam: useSnapshot
+                  ? ligne.diametre ?? jauge?.diam ?? ligne.jauge_id
+                  : jauge?.diam ?? ligne.jauge_id,
+                type: (useSnapshot
+                  ? ligne.type_code ?? jauge?.type ?? ""
+                  : jauge?.type ?? "") as JaugeType,
                 qty,
                 returnedQty,
                 remainingQty: Math.max(0, qty - returnedQty),
@@ -117,8 +123,10 @@ export default function Emprunts({ mode, onRetourAccueil, view = "borrowed" }: E
                 : "emprunte",
             items,
           };
-        })
-      );
+        });
+
+      setEmprunts(mapEmprunts(lignesData, false));
+      setHistoryEmprunts(mapEmprunts(historiqueLignesData, true));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
@@ -359,7 +367,7 @@ export default function Emprunts({ mode, onRetourAccueil, view = "borrowed" }: E
         />
       )}
 
-      {view === "history" && <MetroHistory emprunts={emprunts} />}
+      {view === "history" && <MetroHistory emprunts={historyEmprunts} />}
 
       {toast && <div style={styles.toast}>{toast}</div>}
     </>
@@ -422,6 +430,27 @@ async function fetchAllEmpruntJauges() {
 
     all.push(...(data ?? []));
 
+    if (!data || data.length < step) break;
+  }
+
+  return all;
+}
+
+async function fetchAllEmpruntJaugesHistorique() {
+  const all: any[] = [];
+  const step = 1000;
+
+  for (let from = 0; ; from += step) {
+    const { data, error } = await supabase
+      .from("emprunt_jauges_historique")
+      .select(
+        "emprunt_id, ligne_id, jauge_id, quantite, quantite_retournee, diametre, type_code"
+      )
+      .range(from, from + step - 1);
+
+    if (error) throw new Error(error.message);
+
+    all.push(...(data ?? []));
     if (!data || data.length < step) break;
   }
 
