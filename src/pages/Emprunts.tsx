@@ -22,6 +22,17 @@ type StockItem = {
   enCommande: number;
 };
 
+type ReturnHistoryItem = {
+  id: number;
+  empruntId: number;
+  lineId: number;
+  collab: string;
+  dateRetour: number;
+  diam: string | number | null;
+  type: JaugeType;
+  qty: number;
+};
+
 type EmpruntItem = {
   id: number;
   collab: string;
@@ -41,7 +52,7 @@ type EmpruntItem = {
 export default function Emprunts({ mode, onRetourAccueil, view = "borrowed" }: EmpruntsProps) {
   const [stock, setStock] = useState<StockItem[]>([]);
   const [emprunts, setEmprunts] = useState<EmpruntItem[]>([]);
-  const [historyEmprunts, setHistoryEmprunts] = useState<EmpruntItem[]>([]);
+  const [returnHistory, setReturnHistory] = useState<ReturnHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState("");
   const [error, setError] = useState("");
@@ -60,7 +71,7 @@ export default function Emprunts({ mode, onRetourAccueil, view = "borrowed" }: E
       const jaugesData = await fetchAllJauges();
       const empruntsData = await fetchAllEmprunts();
       const lignesData = await fetchAllEmpruntJauges();
-      const historiqueLignesData = await fetchAllEmpruntJaugesHistorique();
+      const retoursData = await fetchAllRetoursJauges();
 
       const stockItems: StockItem[] = jaugesData
         .map((jauge: any) => ({
@@ -126,7 +137,18 @@ export default function Emprunts({ mode, onRetourAccueil, view = "borrowed" }: E
         });
 
       setEmprunts(mapEmprunts(lignesData, false));
-      setHistoryEmprunts(mapEmprunts(historiqueLignesData, true));
+      setReturnHistory(
+        retoursData.map((retour: any) => ({
+          id: Number(retour.id),
+          empruntId: Number(retour.emprunt_id),
+          lineId: Number(retour.ligne_id),
+          collab: retour.collaborateur ?? "",
+          dateRetour: new Date(retour.date_retour ?? new Date()).getTime(),
+          diam: retour.diametre ?? retour.jauge_id,
+          type: (retour.type_code ?? "") as JaugeType,
+          qty: Number(retour.quantite ?? 0),
+        }))
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
@@ -367,7 +389,7 @@ export default function Emprunts({ mode, onRetourAccueil, view = "borrowed" }: E
         />
       )}
 
-      {view === "history" && <MetroHistory emprunts={historyEmprunts} />}
+      {view === "history" && <MetroHistory retours={returnHistory} />}
 
       {toast && <div style={styles.toast}>{toast}</div>}
     </>
@@ -436,16 +458,17 @@ async function fetchAllEmpruntJauges() {
   return all;
 }
 
-async function fetchAllEmpruntJaugesHistorique() {
+async function fetchAllRetoursJauges() {
   const all: any[] = [];
   const step = 1000;
 
   for (let from = 0; ; from += step) {
     const { data, error } = await supabase
-      .from("emprunt_jauges_historique")
+      .from("retours_jauges")
       .select(
-        "emprunt_id, ligne_id, jauge_id, quantite, quantite_retournee, diametre, type_code"
+        "id, emprunt_id, ligne_id, jauge_id, collaborateur, diametre, type_code, quantite, date_retour"
       )
+      .order("date_retour", { ascending: false })
       .range(from, from + step - 1);
 
     if (error) throw new Error(error.message);

@@ -1,86 +1,63 @@
 type JaugeType = "" | "MD" | "SPEC";
 
-type BorrowItem = {
-  rowId: number;
+type ReturnHistoryItem = {
+  id: number;
+  empruntId: number;
+  lineId: number;
+  collab: string;
+  dateRetour: number;
   diam: string | number | null;
   type: JaugeType;
   qty: number;
-  returnedQty?: number;
-  remainingQty?: number;
-};
-
-type EmpruntItem = {
-  id: number;
-  collab: string;
-  date: number;
-  status: "emprunte" | "rendu";
-  items: BorrowItem[];
 };
 
 type Props = {
-  emprunts: EmpruntItem[];
+  retours: ReturnHistoryItem[];
 };
 
-export default function MetroHistory({ emprunts }: Props) {
+export default function MetroHistory({ retours }: Props) {
   return (
     <section style={styles.panel}>
-      <h3 style={styles.title}>Historique</h3>
+      <h3 style={styles.title}>Historique des rangements</h3>
+      <p style={styles.subtitle}>
+        Chaque rangement apparaît immédiatement sur une ligne séparée.
+      </p>
 
       <table style={styles.table}>
         <thead>
           <tr>
             <th style={styles.th}>Collaborateur</th>
-            <th style={styles.th}>Jauges empruntées</th>
-            <th style={styles.th}>Date emprunt</th>
-            <th style={styles.th}>Jours</th>
-            <th style={styles.th}>Statut</th>
+            <th style={styles.th}>Jauge rangée</th>
+            <th style={styles.th}>Quantité</th>
+            <th style={styles.th}>Date de rangement</th>
+            <th style={styles.th}>Emprunt</th>
           </tr>
         </thead>
 
         <tbody>
-          {emprunts.map((emprunt) => (
-            <tr key={emprunt.id}>
-              <td style={styles.td}>{emprunt.collab || "Sans nom"}</td>
-
+          {retours.map((retour) => (
+            <tr key={retour.id}>
+              <td style={styles.td}>{retour.collab || "Sans nom"}</td>
               <td style={styles.td}>
-                {emprunt.items.length > 0 ? (
-                  <div style={styles.tags}>
-                    {emprunt.items.map((item) => (
-                      <span key={item.rowId} style={styles.tag}>
-                        Ø {item.diam}
-                        <TypeBadge type={item.type} /> x{item.qty}
-                        {Number(item.returnedQty ?? 0) > 0 && (
-                          <small style={styles.returnInfo}>
-                            {Number(item.remainingQty ?? item.qty) > 0
-                              ? ` · rendu ${item.returnedQty}/${item.qty}`
-                              : " · rendu"}
-                          </small>
-                        )}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <span style={styles.muted}>Aucune jauge associée</span>
-                )}
+                <span style={styles.tag}>
+                  Ø {retour.diam}
+                  <TypeBadge type={retour.type} />
+                </span>
               </td>
-
-              <td style={styles.td}>{formatDate(emprunt.date)}</td>
-              <td style={styles.td}>{days(emprunt.date)}</td>
-
               <td style={styles.td}>
-                {emprunt.status === "rendu" ? (
-                  <span style={{ ...styles.pill, ...styles.greenPill }}>Rendu</span>
-                ) : (
-                  <span style={{ ...styles.pill, ...styles.orangePill }}>En cours</span>
-                )}
+                <span style={{ ...styles.pill, ...styles.greenPill }}>
+                  x{retour.qty}
+                </span>
               </td>
+              <td style={styles.td}>{formatDate(retour.dateRetour)}</td>
+              <td style={styles.td}>#{retour.empruntId}</td>
             </tr>
           ))}
 
-          {emprunts.length === 0 && (
+          {retours.length === 0 && (
             <tr>
               <td style={styles.emptyCell} colSpan={5}>
-                Aucun historique.
+                Aucun rangement enregistré.
               </td>
             </tr>
           )}
@@ -96,10 +73,6 @@ function TypeBadge({ type }: { type: JaugeType }) {
   return null;
 }
 
-function days(timestamp: number) {
-  return Math.floor((Date.now() - timestamp) / 86400000);
-}
-
 function formatDate(timestamp: number) {
   return new Date(timestamp).toLocaleString("fr-FR", {
     day: "2-digit",
@@ -107,6 +80,7 @@ function formatDate(timestamp: number) {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    second: "2-digit",
   });
 }
 
@@ -120,9 +94,14 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: 18,
   },
   title: {
-    margin: "0 0 18px",
+    margin: "0 0 6px",
     fontSize: 22,
     color: "#251116",
+  },
+  subtitle: {
+    margin: "0 0 18px",
+    color: "#7a6670",
+    fontWeight: 700,
   },
   table: {
     width: "100%",
@@ -140,14 +119,11 @@ const styles: Record<string, React.CSSProperties> = {
     padding: "14px 12px",
     borderBottom: "1px solid #edf1f6",
     fontWeight: 600,
-    verticalAlign: "top",
-  },
-  tags: {
-    display: "flex",
-    gap: 8,
-    flexWrap: "wrap",
+    verticalAlign: "middle",
   },
   tag: {
+    display: "inline-flex",
+    alignItems: "center",
     background: "#f5e9ee",
     borderRadius: 999,
     padding: "7px 10px",
@@ -156,7 +132,6 @@ const styles: Record<string, React.CSSProperties> = {
   pill: {
     display: "inline-flex",
     alignItems: "center",
-    gap: 6,
     borderRadius: 999,
     padding: "7px 11px",
     fontWeight: 900,
@@ -165,19 +140,6 @@ const styles: Record<string, React.CSSProperties> = {
   greenPill: {
     color: "#15803d",
     background: "#e9f8ef",
-  },
-  orangePill: {
-    color: "#f97316",
-    background: "#fff1e6",
-  },
-  muted: {
-    color: "#7a6670",
-    fontWeight: 700,
-  },
-  returnInfo: {
-    marginLeft: 6,
-    color: "#15803d",
-    fontWeight: 900,
   },
   emptyCell: {
     color: "#7a6670",
