@@ -99,15 +99,20 @@ export default function Emprunts({ mode, onRetourAccueil, view = "borrowed" }: E
             })
             .filter((item: { qty: number }) => item.qty > 0);
 
-          const hasRemaining = items.some((item) => (item.remainingQty ?? item.qty) > 0);
+          const hasItems = items.length > 0;
+          const hasRemaining = items.some(
+            (item) => (item.remainingQty ?? item.qty) > 0
+          );
 
           return {
             id: emprunt.id,
             collab: emprunt.collaborateur ?? "",
             date: new Date(emprunt.date_emprunt ?? new Date()).getTime(),
-            status: hasRemaining
-              ? "emprunte"
-              : emprunt.statut === "RETOURNE" || emprunt.statut === "rendu"
+            status: hasItems
+              ? hasRemaining
+                ? "emprunte"
+                : "rendu"
+              : emprunt.statut === "rendu" || emprunt.statut === "RETOURNE"
                 ? "rendu"
                 : "emprunte",
             items,
@@ -234,17 +239,13 @@ export default function Emprunts({ mode, onRetourAccueil, view = "borrowed" }: E
 
   async function rangeOne(empruntId: number, rowId: number, qty: number) {
     const quantityText = window.prompt("Quantité à ranger", "1");
-    const quantity = Number(quantityText ?? "0");
 
-    if (!quantityText) return;
+    if (quantityText === null) return;
 
-    if (!Number.isFinite(quantity) || quantity < 1) {
+    const quantity = Number(quantityText);
+
+    if (!Number.isInteger(quantity) || quantity < 1) {
       showToast("Quantité incorrecte");
-      return;
-    }
-
-    if (quantity > qty) {
-      showToast("Quantité supérieure à l'emprunt");
       return;
     }
 
@@ -253,48 +254,69 @@ export default function Emprunts({ mode, onRetourAccueil, view = "borrowed" }: E
         .from("emprunt_jauges")
         .select("id, emprunt_id, quantite, quantite_retournee")
         .eq("id", rowId)
+        .eq("emprunt_id", empruntId)
         .single();
 
       if (ligneError) throw ligneError;
 
       const quantiteInitiale = Number(ligne.quantite ?? 0);
       const dejaRetournee = Number(ligne.quantite_retournee ?? 0);
-      const nouvelleRetournee = Math.min(quantiteInitiale, dejaRetournee + quantity);
+      const quantiteRestante = Math.max(0, quantiteInitiale - dejaRetournee);
+
+      if (quantiteRestante <= 0) {
+        showToast("Cette jauge est déjà entièrement rangée");
+        await loadData();
+        return;
+      }
+
+      if (quantity > quantiteRestante || quantity > qty) {
+        showToast("Quantité supérieure au restant à ranger");
+        return;
+      }
 
       const { error: updateLineError } = await supabase
         .from("emprunt_jauges")
-        .update({ quantite_retournee: nouvelleRetournee })
+        .update({ quantite_retournee: dejaRetournee + quantity })
         .eq("id", rowId)
         .eq("emprunt_id", empruntId);
 
       if (updateLineError) throw updateLineError;
 
-      const { data: lignesRestantes, error: restError } = await supabase
+      const { data: lignes, error: lignesError } = await supabase
         .from("emprunt_jauges")
         .select("quantite, quantite_retournee")
         .eq("emprunt_id", empruntId);
 
-      if (restError) throw restError;
+      if (lignesError) throw lignesError;
 
-      const toutRendu = (lignesRestantes ?? []).every((ligne: any) => {
-        return Number(ligne.quantite_retournee ?? 0) >= Number(ligne.quantite ?? 0);
-      });
+      const toutRendu =
+        (lignes ?? []).length > 0 &&
+        (lignes ?? []).every(
+          (item: any) =>
+            Number(item.quantite_retournee ?? 0) >= Number(item.quantite ?? 0)
+        );
 
       const { error: empruntError } = await supabase
         .from("emprunts")
-        .update(
-          toutRendu
-            ? { statut: "rendu", date_retour: new Date().toISOString() }
-            : { statut: "emprunte", date_retour: null }
-        )
+        .update({
+          statut: toutRendu ? "rendu" : "emprunte",
+          date_retour: toutRendu ? new Date().toISOString() : null,
+        })
         .eq("id", empruntId);
 
       if (empruntError) throw empruntError;
 
       await loadData();
-      showToast("Jauge(s) rangée(s)");
+      showToast(
+        toutRendu
+          ? "Emprunt entièrement rendu"
+          : "Jauge rangée, l'emprunt reste en cours"
+      );
     } catch (err) {
-      showToast("Erreur rangement : " + (err instanceof Error ? err.message : "Erreur inconnue"));
+      showToast(
+        "Erreur rangement : " +
+          (err instanceof Error ? err.message : "Erreur inconnue")
+      );
     }
   }
 

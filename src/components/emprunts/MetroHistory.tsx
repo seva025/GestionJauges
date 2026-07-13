@@ -5,6 +5,8 @@ type BorrowItem = {
   diam: string | number | null;
   type: JaugeType;
   qty: number;
+  returnedQty?: number;
+  remainingQty?: number;
 };
 
 type EmpruntItem = {
@@ -47,6 +49,13 @@ export default function MetroHistory({ emprunts }: Props) {
                       <span key={item.rowId} style={styles.tag}>
                         Ø {item.diam}
                         <TypeBadge type={item.type} /> x{item.qty}
+                        {Number(item.returnedQty ?? 0) > 0 && (
+                          <small style={styles.returnInfo}>
+                            {Number(item.remainingQty ?? item.qty) > 0
+                              ? ` · rendu ${item.returnedQty}/${item.qty}`
+                              : " · rendu"}
+                          </small>
+                        )}
                       </span>
                     ))}
                   </div>
@@ -164,6 +173,11 @@ const styles: Record<string, React.CSSProperties> = {
   muted: {
     color: "#7a6670",
     fontWeight: 700,
+  },
+  returnInfo: {
+    marginLeft: 6,
+    color: "#15803d",
+    fontWeight: 900,
   },
   emptyCell: {
     color: "#7a6670",
