@@ -33,6 +33,8 @@ type EmpruntItem = {
     diam: string | number | null;
     type: JaugeType;
     qty: number;
+    returnedQty?: number;
+    remainingQty?: number;
   }[];
 };
 
@@ -79,27 +81,36 @@ export default function Emprunts({ mode, onRetourAccueil, view = "borrowed" }: E
             (ligne: any) => Number(ligne.emprunt_id) === Number(emprunt.id)
           );
 
+          const items = lignes
+            .map((ligne: any) => {
+              const jauge = jaugesById.get(Number(ligne.jauge_id));
+              const qty = Number(ligne.quantite ?? 0);
+              const returnedQty = Number(ligne.quantite_retournee ?? 0);
+
+              return {
+                rowId: ligne.id,
+                jaugeId: ligne.jauge_id,
+                diam: jauge?.diam ?? ligne.jauge_id,
+                type: (jauge?.type ?? "") as JaugeType,
+                qty,
+                returnedQty,
+                remainingQty: Math.max(0, qty - returnedQty),
+              };
+            })
+            .filter((item: { qty: number }) => item.qty > 0);
+
+          const hasRemaining = items.some((item) => (item.remainingQty ?? item.qty) > 0);
+
           return {
             id: emprunt.id,
             collab: emprunt.collaborateur ?? "",
             date: new Date(emprunt.date_emprunt ?? new Date()).getTime(),
-            status:
-              emprunt.statut === "RETOURNE" || emprunt.statut === "rendu"
+            status: hasRemaining
+              ? "emprunte"
+              : emprunt.statut === "RETOURNE" || emprunt.statut === "rendu"
                 ? "rendu"
                 : "emprunte",
-            items: lignes
-              .map((ligne: any) => {
-                const jauge = jaugesById.get(Number(ligne.jauge_id));
-
-                return {
-                  rowId: ligne.id,
-                  jaugeId: ligne.jauge_id,
-                  diam: jauge?.diam ?? ligne.jauge_id,
-                  type: (jauge?.type ?? "") as JaugeType,
-                  qty: Number(ligne.quantite ?? 0),
-                };
-              })
-              .filter((item: { qty: number }) => item.qty > 0),
+            items,
           };
         })
       );
@@ -124,7 +135,7 @@ export default function Emprunts({ mode, onRetourAccueil, view = "borrowed" }: E
       .filter((emprunt) => emprunt.status === "emprunte")
       .flatMap((emprunt) => emprunt.items)
       .filter((item) => item.jaugeId === jaugeId)
-      .reduce((total, item) => total + item.qty, 0);
+      .reduce((total, item) => total + (item.remainingQty ?? item.qty), 0);
   }
 
   function available(jauge: StockItem) {
@@ -191,7 +202,7 @@ export default function Emprunts({ mode, onRetourAccueil, view = "borrowed" }: E
         .insert({
           collaborateur: name,
           date_emprunt: new Date().toISOString(),
-          statut: "EN_COURS",
+          statut: "emprunte",
           type_emprunt: "COLLABORATEUR",
           date_retour: null,
           commentaire: null,
@@ -238,26 +249,47 @@ export default function Emprunts({ mode, onRetourAccueil, view = "borrowed" }: E
     }
 
     try {
-      if (quantity < qty) {
-        const { error } = await supabase
-          .from("emprunt_jauges")
-          .update({ quantite: qty - quantity })
-          .eq("id", rowId);
+      const { data: ligne, error: ligneError } = await supabase
+        .from("emprunt_jauges")
+        .select("id, emprunt_id, quantite, quantite_retournee")
+        .eq("id", rowId)
+        .single();
 
-        if (error) throw error;
-      } else {
-        // On ne supprime plus la ligne emprunt_jauges.
-        // Sinon l'historique ne peut plus afficher quelles jauges avaient été empruntées.
-        const { error } = await supabase
-          .from("emprunts")
-          .update({
-            statut: "RETOURNE",
-            date_retour: new Date().toISOString(),
-          })
-          .eq("id", empruntId);
+      if (ligneError) throw ligneError;
 
-        if (error) throw error;
-      }
+      const quantiteInitiale = Number(ligne.quantite ?? 0);
+      const dejaRetournee = Number(ligne.quantite_retournee ?? 0);
+      const nouvelleRetournee = Math.min(quantiteInitiale, dejaRetournee + quantity);
+
+      const { error: updateLineError } = await supabase
+        .from("emprunt_jauges")
+        .update({ quantite_retournee: nouvelleRetournee })
+        .eq("id", rowId)
+        .eq("emprunt_id", empruntId);
+
+      if (updateLineError) throw updateLineError;
+
+      const { data: lignesRestantes, error: restError } = await supabase
+        .from("emprunt_jauges")
+        .select("quantite, quantite_retournee")
+        .eq("emprunt_id", empruntId);
+
+      if (restError) throw restError;
+
+      const toutRendu = (lignesRestantes ?? []).every((ligne: any) => {
+        return Number(ligne.quantite_retournee ?? 0) >= Number(ligne.quantite ?? 0);
+      });
+
+      const { error: empruntError } = await supabase
+        .from("emprunts")
+        .update(
+          toutRendu
+            ? { statut: "rendu", date_retour: new Date().toISOString() }
+            : { statut: "emprunte", date_retour: null }
+        )
+        .eq("id", empruntId);
+
+      if (empruntError) throw empruntError;
 
       await loadData();
       showToast("Jauge(s) rangée(s)");
@@ -361,7 +393,7 @@ async function fetchAllEmpruntJauges() {
   for (let from = 0; ; from += step) {
     const { data, error } = await supabase
       .from("emprunt_jauges")
-      .select("id, emprunt_id, jauge_id, quantite")
+      .select("id, emprunt_id, jauge_id, quantite, quantite_retournee")
       .range(from, from + step - 1);
 
     if (error) throw new Error(error.message);

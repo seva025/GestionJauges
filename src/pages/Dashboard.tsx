@@ -63,24 +63,29 @@ export default function Dashboard({
       );
 
       setEmprunts(
-        empruntsData.map((emprunt: any) => ({
-          id: emprunt.id,
-          collab: emprunt.collaborateur ?? "",
-          date: new Date(emprunt.date_emprunt ?? new Date()).getTime(),
-          status:
-            emprunt.statut === "RETOURNE" || emprunt.statut === "rendu"
-              ? "rendu"
-              : "emprunte",
-          items: (emprunt.emprunt_jauges ?? [])
-            .map((item: any) => ({
-              rowId: item.id,
-              jaugeId: item.jauge_id,
-              diam: item.jauges?.diametre ?? "",
-              type: (item.jauges?.type_code ?? "") as JaugeType,
-              qty: Number(item.quantite ?? 0),
-            }))
-            .filter((item: { diam: string | number | null; qty: number }) => item.diam && item.qty > 0),
-        }))
+        empruntsData.map((emprunt: any) => {
+          const items = (emprunt.emprunt_jauges ?? [])
+            .map((item: any) => {
+              const qty = Number(item.quantite ?? 0);
+              const returnedQty = Number(item.quantite_retournee ?? 0);
+              return {
+                rowId: item.id,
+                jaugeId: item.jauge_id,
+                diam: item.jauges?.diametre ?? "",
+                type: (item.jauges?.type_code ?? "") as JaugeType,
+                qty: Math.max(0, qty - returnedQty),
+              };
+            })
+            .filter((item: { diam: string | number | null; qty: number }) => item.diam && item.qty > 0);
+
+          return {
+            id: emprunt.id,
+            collab: emprunt.collaborateur ?? "",
+            date: new Date(emprunt.date_emprunt ?? new Date()).getTime(),
+            status: items.length > 0 ? "emprunte" : "rendu",
+            items,
+          };
+        })
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
@@ -147,7 +152,7 @@ async function fetchAllEmprunts() {
     const { data, error } = await supabase
       .from("emprunts")
       .select(
-        "id, collaborateur, date_emprunt, statut, emprunt_jauges(id, jauge_id, quantite, jauges(id, diametre, type_code))"
+        "id, collaborateur, date_emprunt, statut, emprunt_jauges(id, jauge_id, quantite, quantite_retournee, jauges(id, diametre, type_code))"
       )
       .order("date_emprunt", { ascending: false })
       .range(from, from + step - 1);
