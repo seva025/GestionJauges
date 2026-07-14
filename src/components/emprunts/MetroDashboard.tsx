@@ -26,6 +26,7 @@ type MetroDashboardProps = {
   onGoStock: () => void;
   onGoBorrowed: () => void;
   onGoHistory: () => void;
+  onGoCommandes: () => void;
 };
 
 export default function MetroDashboard({
@@ -34,6 +35,7 @@ export default function MetroDashboard({
   onGoStock,
   onGoBorrowed,
   onGoHistory,
+  onGoCommandes,
 }: MetroDashboardProps) {
   const empruntsEnCours = emprunts.filter((emprunt) => emprunt.status === "emprunte");
 
@@ -170,7 +172,7 @@ export default function MetroDashboard({
                 ✅ Ranger
               </button>
 
-              <button style={styles.orangeBtn} onClick={onGoStock}>
+              <button style={styles.orangeBtn} onClick={onGoCommandes}>
                 🚚 Commandes
               </button>
 
@@ -226,7 +228,7 @@ export default function MetroDashboard({
           <section style={styles.panel}>
             <div style={styles.panelHead}>
               <h3 style={styles.panelTitle}>Commandes en cours</h3>
-              <button style={styles.smallBtn} onClick={onGoStock}>
+              <button style={styles.smallBtn} onClick={onGoCommandes}>
                 Voir
               </button>
             </div>

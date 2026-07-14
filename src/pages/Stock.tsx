@@ -151,28 +151,43 @@ export default function Stock() {
   }
 
   async function handleOrder(item: StockItem, qty: number) {
-    if (qty < 1) {
+    if (!Number.isInteger(qty) || qty < 1) {
       showToast("Quantité incorrecte");
       return;
     }
 
     try {
-      const { error } = await supabase
+      const { error: commandeError } = await supabase.from("commandes").insert({
+        jauge_id: item.id,
+        quantite: qty,
+        quantite_recue: 0,
+        date_commande: new Date().toISOString(),
+        date_fin: null,
+        statut: "ouverte",
+        commentaire: null,
+      });
+
+      if (commandeError) throw commandeError;
+
+      const { error: jaugeError } = await supabase
         .from("jauges")
         .update({ en_commande: item.enCommande + qty })
         .eq("id", item.id);
 
-      if (error) throw error;
+      if (jaugeError) throw jaugeError;
 
       await loadData();
       showToast("Commande enregistrée");
     } catch (err) {
-      showToast("Erreur commande : " + (err instanceof Error ? err.message : "Erreur inconnue"));
+      showToast(
+        "Erreur commande : " +
+          (err instanceof Error ? err.message : "Erreur inconnue")
+      );
     }
   }
 
   async function handleReceive(item: StockItem, qty: number) {
-    if (qty < 1) {
+    if (!Number.isInteger(qty) || qty < 1) {
       showToast("Quantité incorrecte");
       return;
     }
@@ -183,7 +198,61 @@ export default function Stock() {
     }
 
     try {
-      const { error } = await supabase
+      const { data: openOrders, error: openOrdersError } = await supabase
+        .from("commandes")
+        .select("id, quantite, quantite_recue")
+        .eq("jauge_id", item.id)
+        .eq("statut", "ouverte")
+        .order("date_commande", { ascending: true });
+
+      if (openOrdersError) throw openOrdersError;
+
+      let remainingToAllocate = qty;
+
+      for (const order of openOrders ?? []) {
+        if (remainingToAllocate <= 0) break;
+
+        const ordered = Number(order.quantite ?? 0);
+        const alreadyReceived = Number(order.quantite_recue ?? 0);
+        const orderRemaining = Math.max(0, ordered - alreadyReceived);
+        const receivedNow = Math.min(orderRemaining, remainingToAllocate);
+
+        if (receivedNow <= 0) continue;
+
+        const newReceived = alreadyReceived + receivedNow;
+        const completed = newReceived >= ordered;
+
+        const { error: receptionError } = await supabase
+          .from("commande_receptions")
+          .insert({
+            commande_id: order.id,
+            quantite: receivedNow,
+            date_reception: new Date().toISOString(),
+          });
+
+        if (receptionError) throw receptionError;
+
+        const { error: updateOrderError } = await supabase
+          .from("commandes")
+          .update({
+            quantite_recue: newReceived,
+            statut: completed ? "terminee" : "ouverte",
+            date_fin: completed ? new Date().toISOString() : null,
+          })
+          .eq("id", order.id);
+
+        if (updateOrderError) throw updateOrderError;
+
+        remainingToAllocate -= receivedNow;
+      }
+
+      if (remainingToAllocate > 0) {
+        throw new Error(
+          "Aucune commande ouverte ne correspond à toute la quantité à réceptionner."
+        );
+      }
+
+      const { error: jaugeError } = await supabase
         .from("jauges")
         .update({
           stock_total: item.total + qty,
@@ -191,12 +260,15 @@ export default function Stock() {
         })
         .eq("id", item.id);
 
-      if (error) throw error;
+      if (jaugeError) throw jaugeError;
 
       await loadData();
       showToast("Commande réceptionnée");
     } catch (err) {
-      showToast("Erreur réception : " + (err instanceof Error ? err.message : "Erreur inconnue"));
+      showToast(
+        "Erreur réception : " +
+          (err instanceof Error ? err.message : "Erreur inconnue")
+      );
     }
   }
 

@@ -5,6 +5,7 @@ import Home from "./components/emprunts/Home";
 import Dashboard from "./pages/Dashboard";
 import Stock from "./pages/Stock";
 import Emprunts from "./pages/Emprunts";
+import Commandes from "./pages/Commandes";
 
 type AppMode = "home" | "collaborateur" | "metrologie";
 
@@ -73,10 +74,12 @@ export default function App() {
             onGoStock={() => setPage("stock")}
             onGoBorrowed={() => setPage("emprunts")}
             onGoHistory={() => setPage("historique")}
+            onGoCommandes={() => setPage("commandes")}
           />
         )}
         {page === "stock" && <Stock />}
         {page === "emprunts" && <Emprunts mode="metrologie" view="borrowed" onRetourAccueil={retourAccueil} />}
+        {page === "commandes" && <Commandes />}
         {page === "historique" && <Emprunts mode="metrologie" view="history" onRetourAccueil={retourAccueil} />}
       </main>
     </div>
@@ -88,6 +91,7 @@ function title(page: Page) {
     dashboard: "Tableau de bord",
     stock: "Stock des jauges",
     emprunts: "Jauges empruntées",
+    commandes: "Commandes",
     historique: "Historique",
   }[page];
 }

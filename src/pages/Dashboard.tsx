@@ -30,12 +30,14 @@ type DashboardProps = {
   onGoStock?: () => void;
   onGoBorrowed?: () => void;
   onGoHistory?: () => void;
+  onGoCommandes?: () => void;
 };
 
 export default function Dashboard({
   onGoStock = () => undefined,
   onGoBorrowed = () => undefined,
   onGoHistory = () => undefined,
+  onGoCommandes = () => undefined,
 }: DashboardProps) {
   const [stock, setStock] = useState<StockItem[]>([]);
   const [emprunts, setEmprunts] = useState<EmpruntItem[]>([]);
@@ -128,6 +130,7 @@ export default function Dashboard({
       onGoStock={onGoStock}
       onGoBorrowed={onGoBorrowed}
       onGoHistory={onGoHistory}
+      onGoCommandes={onGoCommandes}
     />
   );
 }

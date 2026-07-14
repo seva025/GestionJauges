@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { colors } from "../theme/colors";
 
-export type Page = "dashboard" | "stock" | "emprunts" | "historique";
+export type Page = "dashboard" | "stock" | "emprunts" | "commandes" | "historique";
 
 type SidebarProps = {
   page: Page;
@@ -29,6 +29,9 @@ export default function Sidebar({ page, setPage, onLogout }: SidebarProps) {
         </NavButton>
         <NavButton active={page === "emprunts"} onClick={() => setPage("emprunts")}>
           👤 Jauges empruntées
+        </NavButton>
+        <NavButton active={page === "commandes"} onClick={() => setPage("commandes")}>
+          🚚 Commandes
         </NavButton>
         <NavButton active={page === "historique"} onClick={() => setPage("historique")}>
           📜 Historique
