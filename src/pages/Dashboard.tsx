@@ -44,8 +44,8 @@ export default function Dashboard({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  async function loadData() {
-    setLoading(true);
+  async function loadData(showLoader = false) {
+    if (showLoader) setLoading(true);
     setError("");
 
     try {
@@ -108,9 +108,12 @@ export default function Dashboard({
   }
 
   useEffect(() => {
-    loadData();
+    void loadData(true);
 
-    const timer = window.setInterval(loadData, 5000);
+    const timer = window.setInterval(() => {
+      void loadData(false);
+    }, 30_000);
+
     return () => window.clearInterval(timer);
   }, []);
 

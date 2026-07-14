@@ -36,8 +36,8 @@ export default function Commandes() {
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
 
-  async function loadData() {
-    setLoading(true);
+  async function loadData(showLoader = false) {
+    if (showLoader) setLoading(true);
     setError("");
 
     try {
@@ -77,8 +77,12 @@ export default function Commandes() {
   }
 
   useEffect(() => {
-    loadData();
-    const timer = window.setInterval(loadData, 5000);
+    void loadData(true);
+
+    const timer = window.setInterval(() => {
+      void loadData(false);
+    }, 30_000);
+
     return () => window.clearInterval(timer);
   }, []);
 
