@@ -157,15 +157,19 @@ export default function Stock() {
     }
 
     try {
-      const { error: commandeError } = await supabase.from("commandes").insert({
-        jauge_id: item.id,
-        quantite: qty,
-        quantite_recue: 0,
-        date_commande: new Date().toISOString(),
-        date_fin: null,
-        statut: "ouverte",
-        commentaire: null,
-      });
+      const { data: commande, error: commandeError } = await supabase
+        .from("commandes")
+        .insert({
+          jauge_id: item.id,
+          quantite: qty,
+          quantite_recue: 0,
+          date_commande: new Date().toISOString(),
+          date_fin: null,
+          statut: "ouverte",
+          commentaire: null,
+        })
+        .select("id")
+        .single();
 
       if (commandeError) throw commandeError;
 
@@ -174,7 +178,10 @@ export default function Stock() {
         .update({ en_commande: item.enCommande + qty })
         .eq("id", item.id);
 
-      if (jaugeError) throw jaugeError;
+      if (jaugeError) {
+        await supabase.from("commandes").delete().eq("id", commande.id);
+        throw jaugeError;
+      }
 
       await loadData();
       showToast("Commande enregistrée");
