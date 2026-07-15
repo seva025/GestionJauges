@@ -1,0 +1,32 @@
+GESTION JAUGES — CRÉER L'EXE WINDOWS
+
+Le projet utilise déjà Tauri. Il ne faut pas installer Electron.
+
+1. Ouvrir PowerShell dans C:\GestionJauges
+
+2. Installer les dépendances :
+   npm install
+
+3. Tester la compilation React :
+   npm run build
+
+4. Générer l'installateur Windows :
+   npm run exe:build
+
+Le premier lancement peut prendre plusieurs minutes, car Rust compile l'application.
+
+Résultat attendu :
+   C:\GestionJauges\src-tauri\target\release\bundle\nsis\Gestion Jauges_1.0.0_x64-setup.exe
+
+Pour tester l'application en mode bureau sans créer l'installateur :
+   npm run exe:dev
+
+PRÉREQUIS WINDOWS
+- Node.js installé
+- Rust installé : https://rustup.rs
+- Microsoft C++ Build Tools avec « Développement Desktop en C++ »
+- WebView2 (déjà présent sur Windows 10/11 dans la plupart des cas)
+
+IMPORTANT
+L'application a besoin d'Internet pour accéder à Supabase.
+La clé Supabase embarquée doit être une clé publique anon/publishable, jamais service_role.
