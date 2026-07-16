@@ -181,17 +181,27 @@ export default function Emprunts({ mode, onRetourAccueil, view = "borrowed" }: E
     return basket.filter((id) => id === jaugeId).length;
   }
 
-  function addBasket(jaugeId: number) {
+  function addBasket(jaugeId: number, quantite: number) {
     const jauge = stock.find((item) => item.id === jaugeId);
 
     if (!jauge) return;
 
-    if (available(jauge) - borrowedInBasket(jaugeId) <= 0) {
-      showToast("Stock insuffisant");
+    const restant = available(jauge) - borrowedInBasket(jaugeId);
+
+    if (!Number.isInteger(quantite) || quantite < 1) {
+      showToast("Quantité incorrecte");
       return;
     }
 
-    setBasket([...basket, jaugeId]);
+    if (quantite > restant) {
+      showToast(`Stock insuffisant : maximum ${restant}`);
+      return;
+    }
+
+    setBasket((current) => [
+      ...current,
+      ...Array.from({ length: quantite }, () => jaugeId),
+    ]);
   }
 
   async function validateBorrow() {

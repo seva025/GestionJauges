@@ -21,6 +21,14 @@ export default function Home({
           </div>
         </div>
 
+        <div style={styles.heroLogoWrap}>
+          <img
+            src="/gestion-jauges-logo.png"
+            alt="Logo Gestion Jauges avec pied à coulisse"
+            style={styles.heroLogo}
+          />
+        </div>
+
         <div style={styles.choiceGrid}>
           <button style={styles.choice} onClick={onCollaborateur}>
             <div style={styles.ico}>👤</div>
@@ -94,6 +102,19 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 36,
     letterSpacing: -1,
     color: "#251116",
+  },
+  heroLogoWrap: {
+    display: "flex",
+    justifyContent: "center",
+    margin: "-12px 0 28px",
+  },
+  heroLogo: {
+    width: 190,
+    height: 190,
+    objectFit: "cover",
+    borderRadius: 36,
+    boxShadow: "0 18px 38px rgba(78,12,31,.22)",
+    border: "1px solid #e3d3d8",
   },
   choiceGrid: {
     display: "grid",
