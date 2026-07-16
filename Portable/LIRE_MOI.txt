@@ -1,0 +1,5 @@
+GESTION JAUGES - VERSION PORTABLE
+
+Lancez GestionJauges.exe par double-clic.
+Aucune installation n'est necessaire.
+Une connexion Internet est necessaire pour Supabase.
