@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 type HomeProps = {
   password: string;
   setPassword: (value: string) => void;
@@ -12,36 +14,47 @@ export default function Home({
   onMetroLogin,
 }: HomeProps) {
   return (
-    <div style={styles.home}>
-      <section style={styles.homeCard}>
-        <div style={styles.brand}>
-          <div style={styles.logo}>JW</div>
-          <div>
-            <h1 style={styles.title}>Gestion des jauges</h1>
-          </div>
-        </div>
+    <main style={styles.page}>
+      <section style={styles.card}>
+        <header style={styles.header}>
+          <h1 style={styles.title}>Gestion des jauges</h1>
 
-        <div style={styles.heroLogoWrap}>
           <img
-            src="/gestion-jauges-logo.png"
-            alt="Logo Gestion Jauges avec pied à coulisse"
-            style={styles.heroLogo}
+            src="/logo-entreprises.png"
+            alt="Joray & Wyss S.A. et Pivodel SA"
+            style={styles.companyLogo}
+          />
+        </header>
+
+        <div style={styles.centralLogoWrap}>
+          <img
+            src="/jw-caliper-no-text.png"
+            alt="Logo JW avec pied à coulisse"
+            style={styles.centralLogo}
           />
         </div>
 
         <div style={styles.choiceGrid}>
-          <button style={styles.choice} onClick={onCollaborateur}>
-            <div style={styles.ico}>👤</div>
-            <h2 style={styles.choiceTitle}>Collaborateur</h2>
+          <button
+            type="button"
+            style={styles.choice}
+            onClick={onCollaborateur}
+          >
+            <span style={styles.icon}>👤</span>
+            <span style={styles.choiceLabel}>Collaborateur</span>
           </button>
 
-          <button style={styles.choice} onClick={() => document.getElementById("metro-password")?.focus()}>
-            <div style={styles.ico}>🔒</div>
-            <h2 style={styles.choiceTitle}>Métrologie</h2>
+          <button
+            type="button"
+            style={styles.choice}
+            onClick={() => document.getElementById("metro-password")?.focus()}
+          >
+            <span style={styles.icon}>🔒</span>
+            <span style={styles.choiceLabel}>Métrologie</span>
           </button>
         </div>
 
-        <div style={styles.metroLogin}>
+        <div style={styles.loginRow}>
           <input
             id="metro-password"
             style={styles.input}
@@ -50,116 +63,126 @@ export default function Home({
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                onMetroLogin();
-              }
+              if (event.key === "Enter") onMetroLogin();
             }}
           />
 
-          <button style={styles.button} onClick={onMetroLogin}>
+          <button type="button" style={styles.loginButton} onClick={onMetroLogin}>
             Connexion
           </button>
         </div>
       </section>
-    </div>
+    </main>
   );
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  home: {
-    minHeight: "calc(100vh - 120px)",
+const styles: Record<string, CSSProperties> = {
+  page: {
+    minHeight: "100vh",
     display: "grid",
     placeItems: "center",
-    padding: 28,
+    padding: 24,
+    background: "linear-gradient(135deg,#fffafb 0%,#f1e7eb 100%)",
+    fontFamily: "Segoe UI, Arial, sans-serif",
   },
-  homeCard: {
-    width: "min(760px, 94vw)",
-    background: "white",
-    border: "1px solid #e3d3d8",
-    borderRadius: 28,
-    boxShadow: "0 18px 50px rgba(78,12,31,.12)",
-    padding: 42,
-  },
-  brand: {
+  card: {
+    width: "min(1180px, 96vw)",
+    minHeight: "min(860px, 94vh)",
+    background: "rgba(255,255,255,0.97)",
+    border: "1px solid #ead4db",
+    borderRadius: 30,
+    boxShadow: "0 24px 70px rgba(78,12,31,.14)",
+    padding: "42px 56px 48px",
     display: "flex",
-    alignItems: "center",
-    gap: 14,
-    marginBottom: 36,
+    flexDirection: "column",
   },
-  logo: {
-    width: 62,
-    height: 62,
-    borderRadius: 18,
-    background: "linear-gradient(145deg,#3a0718,#8a1538)",
-    color: "white",
-    display: "grid",
-    placeItems: "center",
-    fontWeight: 900,
-    fontSize: 24,
+  header: {
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 30,
   },
   title: {
     margin: 0,
-    fontSize: 36,
-    letterSpacing: -1,
     color: "#251116",
+    fontFamily: "Georgia, 'Times New Roman', serif",
+    fontSize: "clamp(34px,4vw,58px)",
+    lineHeight: 1.05,
+    letterSpacing: "-1.5px",
   },
-  heroLogoWrap: {
-    display: "flex",
-    justifyContent: "center",
-    margin: "-12px 0 28px",
+  companyLogo: {
+    width: "min(500px, 42vw)",
+    maxHeight: 105,
+    objectFit: "contain",
+    objectPosition: "right top",
   },
-  heroLogo: {
-    width: 190,
-    height: 190,
+  centralLogoWrap: {
+    flex: 1,
+    minHeight: 260,
+    display: "grid",
+    placeItems: "center",
+    padding: "24px 0 30px",
+  },
+  centralLogo: {
+    width: "clamp(210px, 26vw, 330px)",
+    aspectRatio: "1 / 1",
     objectFit: "cover",
-    borderRadius: 36,
-    boxShadow: "0 18px 38px rgba(78,12,31,.22)",
-    border: "1px solid #e3d3d8",
+    borderRadius: 38,
+    boxShadow: "0 20px 45px rgba(54,0,16,.24)",
   },
   choiceGrid: {
     display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: 18,
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gap: 28,
+    marginBottom: 26,
   },
   choice: {
-    border: "1px solid #e3d3d8",
-    background: "white",
-    borderRadius: 20,
-    padding: 28,
-    textAlign: "left",
-    boxShadow: "0 10px 24px rgba(78,12,31,.06)",
+    minHeight: 210,
+    border: "1px solid #e7cdd5",
+    background: "#fff",
+    borderRadius: 24,
+    boxShadow: "0 12px 30px rgba(78,12,31,.07)",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 18,
     cursor: "pointer",
   },
-  ico: {
-    fontSize: 36,
+  icon: {
+    fontSize: 52,
+    lineHeight: 1,
   },
-  choiceTitle: {
-    margin: "14px 0 0",
-    fontSize: 22,
-    color: "#251116",
+  choiceLabel: {
+    color: "#160b0e",
+    fontSize: "clamp(25px,2vw,34px)",
+    fontWeight: 850,
   },
-  metroLogin: {
-    marginTop: 18,
+  loginRow: {
     display: "grid",
-    gridTemplateColumns: "1fr 180px",
-    gap: 12,
+    gridTemplateColumns: "1fr 270px",
+    gap: 18,
   },
   input: {
-    width: "100%",
-    border: "1px solid #e3d3d8",
-    borderRadius: 13,
+    minWidth: 0,
+    height: 72,
+    border: "1px solid #e5cbd3",
+    borderRadius: 18,
     background: "white",
-    padding: "14px 16px",
+    padding: "0 24px",
     outline: "none",
-    fontSize: 15,
+    fontSize: 21,
+    color: "#251116",
+    boxSizing: "border-box",
   },
-  button: {
+  loginButton: {
     border: "none",
-    borderRadius: 13,
-    padding: "13px 18px",
-    fontWeight: 800,
-    background: "#8a1538",
+    borderRadius: 18,
+    background: "linear-gradient(135deg,#7f102f,#a51640)",
     color: "white",
+    fontSize: 21,
+    fontWeight: 900,
     cursor: "pointer",
+    boxShadow: "0 12px 24px rgba(138,21,56,.2)",
   },
 };
