@@ -2,7 +2,7 @@
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Gestion Jauges",
   "version": "1.0.0",
-  "identifier": "fr.seva.gestionjauges",
+  "identifier": "com.joraywyss.gestionjauges",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -12,14 +12,13 @@
   "app": {
     "windows": [
       {
-        "title": "Gestion Jauges",
+        "title": "Gestion Jauges — Métrologie",
         "width": 1500,
         "height": 950,
         "minWidth": 1100,
         "minHeight": 700,
         "center": true,
         "resizable": true,
-        "fullscreen": false,
         "maximized": false
       }
     ],
@@ -29,33 +28,12 @@
   },
   "bundle": {
     "active": true,
-    "targets": [
-      "nsis"
-    ],
+    "targets": "all",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
-      "icons/icon.icns",
       "icons/icon.ico"
-    ],
-    "category": "Business",
-    "shortDescription": "Gestion du stock, des emprunts et des commandes de jauges.",
-    "longDescription": "Application de gestion des jauges pour les collaborateurs et le service Métrologie.",
-    "windows": {
-      "webviewInstallMode": {
-        "type": "downloadBootstrapper",
-        "silent": true
-      },
-      "nsis": {
-        "installMode": "perMachine",
-        "languages": [
-          "French"
-        ],
-        "displayLanguageSelector": false,
-        "startMenuFolder": "Gestion Jauges",
-        "compression": "lzma"
-      }
-    }
+    ]
   }
 }
