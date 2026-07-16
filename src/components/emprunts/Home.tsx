@@ -1,4 +1,6 @@
 import type { CSSProperties } from "react";
+import companyLogos from "../../assets/logo-entreprises.png";
+import jwCaliperLogo from "../../assets/jw-caliper-no-text.png";
 
 type HomeProps = {
   password: string;
@@ -20,7 +22,7 @@ export default function Home({
           <h1 style={styles.title}>Gestion des jauges</h1>
 
           <img
-            src="/logo-entreprises.png"
+            src={companyLogos}
             alt="Joray & Wyss S.A. et Pivodel SA"
             style={styles.companyLogo}
           />
@@ -28,7 +30,7 @@ export default function Home({
 
         <div style={styles.centralLogoWrap}>
           <img
-            src="/jw-caliper-no-text.png"
+            src={jwCaliperLogo}
             alt="Logo JW avec pied à coulisse"
             style={styles.centralLogo}
           />
@@ -88,13 +90,14 @@ const styles: Record<string, CSSProperties> = {
   card: {
     width: "min(1180px, 96vw)",
     minHeight: "min(860px, 94vh)",
-    background: "rgba(255,255,255,0.97)",
+    background: "rgba(255,255,255,0.98)",
     border: "1px solid #ead4db",
     borderRadius: 30,
     boxShadow: "0 24px 70px rgba(78,12,31,.14)",
     padding: "42px 56px 48px",
     display: "flex",
     flexDirection: "column",
+    boxSizing: "border-box",
   },
   header: {
     display: "flex",
@@ -112,20 +115,20 @@ const styles: Record<string, CSSProperties> = {
   },
   companyLogo: {
     width: "min(500px, 42vw)",
-    maxHeight: 105,
+    height: 90,
     objectFit: "contain",
     objectPosition: "right top",
   },
   centralLogoWrap: {
     flex: 1,
-    minHeight: 260,
+    minHeight: 250,
     display: "grid",
     placeItems: "center",
-    padding: "24px 0 30px",
+    padding: "22px 0 28px",
   },
   centralLogo: {
-    width: "clamp(210px, 26vw, 330px)",
-    aspectRatio: "1 / 1",
+    width: "clamp(210px, 25vw, 320px)",
+    height: "clamp(210px, 25vw, 320px)",
     objectFit: "cover",
     borderRadius: 38,
     boxShadow: "0 20px 45px rgba(54,0,16,.24)",
